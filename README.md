@@ -48,3 +48,23 @@ Expo (managed workflow) · TypeScript · Expo Router · Zustand · expo-sqlite �
 ## Project docs
 
 Start with [`CLAUDE.md`](CLAUDE.md) for the project overview and engineering rules. All design docs live in [`docs/`](docs/) — product, architecture, game rules, AI contract, schema, UI spec, conventions, and the Phase 5 AI validation protocol.
+
+## Local development setup
+
+Prerequisites: Node 20+, npm 10+, Git, an iPhone 15 Pro or newer with the Expo Go app installed (iOS 26+).
+
+```bash
+git clone <repo>
+cd questum
+npm install
+npm run typecheck   # should pass
+npm run lint        # should pass
+npm run test        # should pass (after Section B)
+
+npm start
+# scan the QR code with Expo Go on your iPhone
+```
+
+The first time the app boots on a device it creates `questum.db` in the app's sandboxed storage and applies migrations. To reset: delete the app and reinstall via Expo Go (or call `expo-sqlite`'s `deleteDatabaseAsync` from a dev menu — wired in Phase 4).
+
+Branching: `develop` is the integration branch, `main` is the release branch. Open PRs against `develop` (see `docs/CONVENTIONS.md`).
