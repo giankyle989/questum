@@ -10,14 +10,12 @@ interface Logger {
 const isDev = __DEV__;
 
 function emit(level: Level, message: string, args: unknown[]): void {
-  // ESLint's no-console allows warn/error; we use those channels for all dev logs.
+  // ESLint's no-console rule allows warn/error; we route everything through those channels.
   if (!isDev && (level === 'debug' || level === 'info')) return;
   const tag = `[${level}]`;
   if (level === 'error') {
-    // eslint-disable-next-line no-console
     console.error(tag, message, ...args);
   } else {
-    // eslint-disable-next-line no-console
     console.warn(tag, message, ...args);
   }
 }
