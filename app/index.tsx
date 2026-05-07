@@ -1,9 +1,11 @@
-import { Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
+import { useSettingsStore } from '@/state/settingsStore';
 
 export default function Index() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Questum — Phase 1 placeholder</Text>
-    </View>
+  const onboardingComplete = useSettingsStore((s) => s.onboardingComplete);
+  return onboardingComplete ? (
+    <Redirect href="/(main)/character" />
+  ) : (
+    <Redirect href="/onboarding" />
   );
 }
