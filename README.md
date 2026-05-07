@@ -1,68 +1,50 @@
-# Questum — Documentation
+# Questum
 
-This folder contains the project's design and engineering docs. Drop the entire folder into the root of your Claude Code project, and Claude will read `CLAUDE.md` first.
+**Turn your life into an RPG.** Tell the app what you did in plain language. On-device AI parses it into XP across six classic attributes (STR, DEX, CON, INT, WIS, CHA). Your character levels up when you do.
 
-## Reading order for humans
+## Why it exists
 
-1. `CLAUDE.md` — start here. The project overview, constraints, and rules of engagement.
-2. `docs/PRD.md` — what we're building and why.
-3. `docs/PHASES.md` — how we're building it, in order.
-4. `docs/ARCHITECTURE.md` — module structure and dependency rules.
-5. `docs/GAME_RULES.md` — exact game mechanics (the spec for the engine).
-6. `docs/AI_CONTRACT.md` — input/output contract for any AI implementation.
-7. `docs/SCHEMA.md` — SQLite schema and migration approach.
-8. `docs/UI_SPEC.md` — screens and components.
-9. `docs/CONVENTIONS.md` — code style, naming, testing.
-10. `docs/MOCK_AI.md` — keyword classifier for Phases 1-4.
-11. `docs/AI_SPIKE.md` — validation protocol for Phase 5.
+Most habit trackers fail because logging is work — checkboxes, tags, upfront goal-setting — for delayed, abstract rewards. Questum's wedge is **friction-free logging via on-device AI**: type a sentence, the AI does the rest.
 
-## How to use with Claude Code
+- **No checklists.** Free-form natural language.
+- **No subscription.** One-time purchase, on-device AI only — no cloud LLM costs.
+- **No accounts.** Local-first; your data never leaves your phone.
+- **Visible cost of slacking.** Small daily decay (after a 2-day grace period) so consistency actually matters.
 
-In your project directory, place these files at the root level:
+## Core mechanics
 
-```
-your-project/
-├── CLAUDE.md               ← project overview, Claude reads this first
-├── docs/
-│   ├── PRD.md
-│   ├── ARCHITECTURE.md
-│   ├── GAME_RULES.md
-│   ├── SCHEMA.md
-│   ├── AI_CONTRACT.md
-│   ├── UI_SPEC.md
-│   ├── PHASES.md
-│   ├── CONVENTIONS.md
-│   ├── MOCK_AI.md
-│   └── AI_SPIKE.md
-└── (your code)
-```
+- Six attributes mapped to real-life domains (lifting → STR, studying → INT, calls → CHA, etc.)
+- Each attribute levels independently; total character level = average
+- Daily XP cap per attribute prevents farming
+- Streak multiplier rewards consecutive days, up to 1.20x at day 7+
+- Adaptive daily missions and a weekly quest, seeded from your own recent log patterns — no upfront goal-setting
+- Decay only nibbles in-progress XP; once you hit a level, you keep it
 
-When prompting Claude Code, reference docs explicitly when relevant:
-- "Implement the decay function per `docs/GAME_RULES.md` section 'Decay'"
-- "Build the LogEntryScreen per `docs/UI_SPEC.md`, using the mock AIService"
-- "We're starting Phase 1, follow `docs/PHASES.md` Phase 1 task list"
+Full mechanics: [`docs/GAME_RULES.md`](docs/GAME_RULES.md).
 
-This keeps Claude Code grounded in your actual decisions instead of inventing.
+## Platforms
 
-## Updating these docs
+- **iOS 26+** on Apple Intelligence devices (iPhone 15 Pro and newer) — Apple Foundation Models
+- **Android 14+** with Gemini Nano (Pixel 8+, Galaxy S24+, and others with AICore)
 
-The docs are not frozen. As you make decisions, update the relevant doc and commit. The doc is the source of truth; the code follows the doc.
+Unsupported devices see a waitlist screen instead of a degraded experience.
 
-Examples of changes that should update docs:
-- Choosing a specific React Native AI library → update `AI_CONTRACT.md` "Platform implementation notes"
-- Tweaking decay rate after testing → update `GAME_RULES.md` constants
-- Adding a new screen → update `UI_SPEC.md`
-- Locking the launch price → update `PRD.md` pricing section
+## Status
 
-Don't let the code drift ahead of the docs.
+MVP in development. Built in five strict phases:
 
-## What's NOT in here
+1. **Foundation** — project setup, SQLite schema, state, navigation
+2. **Game engine** — pure logic for XP, leveling, decay, streaks, missions (unit tested)
+3. **UI** — all screens wired to a mock AI service
+4. **Polish** — animations, notifications, mission generator, soft gate
+5. **Real AI integration** — Apple Foundation Models + Gemini Nano
 
-- Visual design (color palette specifics, exact typography, illustration style) — this happens in Phase 4
-- Marketing copy and App Store metadata — drafted in Phase 4, finalized post-Phase 5
-- Backend / server code — there is none in MVP
-- Specific React Native AI library choice — verify and lock during Phase 5 prep, not before
+Full task breakdown: [`docs/PHASES.md`](docs/PHASES.md).
 
-## Questions still open
+## Tech stack
 
-Tracked in `docs/PRD.md` section 13. As they get resolved, move them out of "open questions" and into the relevant section of the doc.
+Expo (managed workflow) · TypeScript · Expo Router · Zustand · expo-sqlite · NativeWind · Reanimated 3 + Moti · Jest + React Native Testing Library
+
+## Project docs
+
+Start with [`CLAUDE.md`](CLAUDE.md) for the project overview and engineering rules. All design docs live in [`docs/`](docs/) — product, architecture, game rules, AI contract, schema, UI spec, conventions, and the Phase 5 AI validation protocol.
