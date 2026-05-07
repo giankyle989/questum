@@ -2,6 +2,8 @@
 
 Phases are sequential. Each phase has acceptance criteria. Do not start phase N+1 before phase N is fully complete and tested.
 
+**Sequencing note (2026-05-07):** Phases 1–5 ship iOS-only for the v1 App Store launch. Android (Gemini Nano + Play Store) is **Phase 6**, planned after the iOS v1 ships and validates the product. The cross-platform code (Expo, RN, Zustand, expo-sqlite, NativeWind) carries forward; only the AI implementation, store-distribution work, and device-specific testing are platform-specific.
+
 ## Phase 1 — Foundation
 
 **Goal:** A blank Expo app on the user's iPhone with SQLite, navigation, and state management ready.
@@ -135,21 +137,20 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 
 **Requires Mac access.** Cannot use Expo Go — requires custom dev builds.
 
-**Goal:** Replace mock AIService with Apple Foundation Models on iOS and Gemini Nano on Android. Validate via the AI spike protocol.
+**Goal:** Replace mock AIService with Apple Foundation Models on iOS. Validate via the AI spike protocol. (Gemini Nano + Android is deferred to Phase 6 — see Sequencing note above.)
 
 **Tasks:**
 1. Rent cloud Mac (MacinCloud pay-as-you-go) or use other Mac access
 2. Install Xcode 16+, Apple Developer account setup
 3. Create iOS dev build with `react-native-apple-llm` (or chosen library)
 4. Implement `AppleAIService` per `AI_CONTRACT.md`
-5. Implement `GeminiNanoService` for Android (can be done from Windows with Android Studio)
-6. Implement `aiServiceFactory.ts` with platform detection and availability probe
-7. Run the AI spike protocol from `AI_SPIKE.md`:
+5. Implement `aiServiceFactory.ts` with platform detection and availability probe (returns `MockAIService` on non-iOS in this phase; `GeminiNanoService` slot is reserved for Phase 6)
+6. Run the AI spike protocol from `AI_SPIKE.md`:
    - 30 test logs across difficulty tiers
    - Score schema validity, attribute correctness, XP reasonableness, latency
    - Run consistency check (same log 5 times)
-8. Tune system prompt based on spike results
-9. Iterate on few-shot examples until acceptance criteria are met
+7. Tune system prompt based on spike results
+8. Iterate on few-shot examples until acceptance criteria are met
 
 **Acceptance criteria:**
 - Schema validity ≥ 95% on the 30-log test set
@@ -170,18 +171,36 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 
 Not a build phase, but the final gate before shipping.
 
-**Tasks:**
-1. EAS Build production iOS and Android binaries
+**Tasks (iOS-only for v1):**
+1. EAS Build production iOS binary
 2. App Store Connect setup: pricing (₱499/$9.99), screenshots, description, keywords
 3. **Configure App Store Connect Supported Devices list** to only Apple Intelligence-capable iPhones (iPhone 15 Pro, 15 Pro Max, all iPhone 16/17 series, and any newer Apple-Intelligence devices). Verify with App Store Connect's preview that the listing is hidden on incompatible devices.
-4. Play Console setup: same pricing and metadata
-5. **Configure Play Console Device Catalog** to whitelist Gemini Nano-capable devices (Pixel 8/8 Pro/9 series, Galaxy S24/S25 series, other AICore-capable devices verified at submit time). Verify with Play Console's device-availability preview.
-6. Privacy nutrition label submitted accurately ("Data Not Collected")
-7. App review notes prepared (explain on-device AI, why permissions are requested, why the device list is restrictive)
-8. Soft launch to a small TestFlight / Play Console internal track group
-9. Address review feedback
-10. Public launch with launch-week sale (₱349/$6.99)
-11. Monitor crash reports (expo-error-recovery / Sentry)
+4. Privacy nutrition label submitted accurately ("Data Not Collected")
+5. App review notes prepared (explain on-device AI, why permissions are requested, why the device list is restrictive)
+6. Soft launch to a small TestFlight group
+7. Address review feedback
+8. Public launch with launch-week sale (₱349/$6.99)
+9. Monitor crash reports (expo-error-recovery / Sentry)
+
+---
+
+## Phase 6 — Android (post-iOS-launch)
+
+**Status:** Planned post-MVP. Do not begin until Phase 5 is shipping on iOS and the product premise has been validated by real users.
+
+**Goal:** Bring Questum to Gemini Nano-capable Android devices.
+
+**Tasks (sketch — refine when phase begins):**
+1. Implement `GeminiNanoService` per `AI_CONTRACT.md` using ML Kit GenAI Prompt API or AICore directly
+2. Wire `aiServiceFactory.ts` to return `GeminiNanoService` on Android when probe succeeds
+3. Run the AI spike protocol on a Pixel 8+ and a Galaxy S24+ to validate equivalent quality to iOS
+4. Tune prompt for any Gemini-specific quirks
+5. EAS Build production Android binary
+6. Play Console setup: pricing, screenshots, description, keywords
+7. **Configure Play Console Device Catalog** to whitelist Gemini Nano-capable devices
+8. Privacy nutrition label parity
+9. Soft launch to Play Console internal track
+10. Public Android launch
 
 ---
 

@@ -24,10 +24,10 @@ Full mechanics: [`docs/GAME_RULES.md`](docs/GAME_RULES.md).
 
 ## Platforms
 
-- **iOS 26+** on Apple Intelligence devices (iPhone 15 Pro and newer) — Apple Foundation Models
-- **Android 14+** with Gemini Nano (Pixel 8+, Galaxy S24+, and others with AICore)
+- **iOS 26+** on Apple Intelligence devices (iPhone 15 Pro and newer) — Apple Foundation Models. **v1 ships iOS-only.**
+- **Android 14+** with Gemini Nano (Pixel 8+, Galaxy S24+, and others with AICore) — planned post-launch.
 
-Distribution is gated at the store level — the App Store and Play Store hide Questum from incompatible devices, so unsupported users never get to purchase.
+Distribution is gated at the store level — the App Store hides Questum from incompatible devices, so unsupported users never get to purchase.
 
 ## Status
 

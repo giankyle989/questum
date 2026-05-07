@@ -24,9 +24,10 @@ The project is built in strict order. Do not start a phase before the previous o
 - **Phase 2:** Game engine — pure logic for XP, leveling, decay, streaks, missions. Unit tested.
 - **Phase 3:** UI — all screens wired to a **mock AIService** (keyword-based classifier)
 - **Phase 4:** Polish — animations, notifications, mission generator, AI-unavailable banner
-- **Phase 5:** Real AI integration — Apple Foundation Models + Gemini Nano. Requires Mac access. Last phase before App Store submission.
+- **Phase 5:** Real AI integration — Apple Foundation Models on iOS. Requires Mac access. Last phase before App Store submission.
+- **Phase 6 (post-MVP):** Android — Gemini Nano integration and Play Store launch.
 
-The mock AIService in Phase 3 is scaffolding, NOT a fallback. The real AI must work for the product to ship. Phase 5 is non-negotiable before submission.
+Phases 1–5 ship iOS-only for v1. The mock AIService in Phase 3 is scaffolding, NOT a fallback. The real AI must work for the product to ship. Phase 5 is non-negotiable before submission.
 
 ## Documentation structure
 
