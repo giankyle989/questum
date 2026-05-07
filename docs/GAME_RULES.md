@@ -23,11 +23,13 @@ xpToReachLevel(N) = 100 * N
 ```
 
 That is:
+
 - Level 1 → 2 needs 100 XP
 - Level 2 → 3 needs 200 XP
 - Level 10 → 11 needs 1000 XP
 
 Total cumulative XP to reach level N from level 1:
+
 ```
 totalXPForLevel(N) = sum from i=1 to N-1 of (100 * i)
                   = 100 * (N-1) * N / 2
@@ -51,6 +53,7 @@ characterLevel = floor((str + dex + con + int + wis + cha) / 6)
 ### Per-log XP cap
 
 The AI returns 0–100 XP per log (`total_xp` field). Code must validate:
+
 - Reject if `total_xp < 0` or `total_xp > 100`
 - Reject if any single `attribute_xp` value > 50
 - Sum of `attribute_xp` values may exceed `total_xp` (multi-attribute logs are bonus, not redistributive)
@@ -60,6 +63,7 @@ The AI returns 0–100 XP per log (`total_xp` field). Code must validate:
 Maximum 200 XP per attribute per calendar day.
 
 When applying XP from a log:
+
 1. For each attribute in `attribute_xp`, check today's accumulated XP for that attribute
 2. Allow only up to `200 - already_earned_today`
 3. Excess is silently dropped (no error to user)
@@ -68,7 +72,7 @@ This prevents grinding and AI gaming.
 
 ### Per-log ceiling (worked example)
 
-Mission bonus XP is intentionally *outside* the daily cap — completing a mission you set out to complete is the point, and shouldn't be diluted by the cap budget you've already used. Combined with multipliers, a single log can deposit a large amount onto one attribute. Worked maximum:
+Mission bonus XP is intentionally _outside_ the daily cap — completing a mission you set out to complete is the point, and shouldn't be diluted by the cap budget you've already used. Combined with multipliers, a single log can deposit a large amount onto one attribute. Worked maximum:
 
 - Per-attribute AI XP cap: **50** (per `LogResult` schema)
 - Improvement bonus: ×1.25 → **62.5**
@@ -104,11 +108,11 @@ The AI is responsible for detecting this, not the game engine. The prompt includ
 Calculated from the user's current streak length (consecutive days with at least one log).
 
 | Streak days | Multiplier |
-|---|---|
-| 1–2  | 1.00x |
-| 3–4  | 1.05x |
-| 5–6  | 1.10x |
-| 7+   | 1.20x |
+| ----------- | ---------- |
+| 1–2         | 1.00x      |
+| 3–4         | 1.05x      |
+| 5–6         | 1.10x      |
+| 7+          | 1.20x      |
 
 Applied after improvement bonus, before daily cap clamping:
 
@@ -121,12 +125,14 @@ xpAfterMultiplier = round(xpAfterImprovement * streakMultiplier)
 Both the persisted and displayed streak rules below operate on **non-paused calendar days**: any day fully within a `decayPaused` window is skipped when computing gaps. Pause is the user's "time off" — it freezes the streak at its current value rather than ticking it forward or breaking it.
 
 **Persisted streak** (written on log submit). After processing a log on day D:
+
 - Compute `nonPausedDaysSinceLastLog`: count of non-paused calendar days between `lastLogDay` and D, exclusive of both.
 - If `nonPausedDaysSinceLastLog === 0` (last log was on D or on the previous non-paused day): streak increments
 - If the user's last log was on day D itself (already logged today): streak unchanged
 - Otherwise (gap of 1+ non-paused days): streak resets to 1
 
 **Displayed streak** (computed at render time). Pure function `displayedStreak(stored, lastLogDay, today, pauseWindow)`:
+
 - Compute `nonPausedDaysSinceLastLog` between `lastLogDay` and `today`.
 - If `today === lastLogDay` or `nonPausedDaysSinceLastLog === 0`: return `stored` (still in window)
 - Otherwise: return 0 (broken)
@@ -187,16 +193,18 @@ function applyDecay(attribute: AttributeState, days: number): AttributeState {
 ### Pause mode
 
 User can pause decay from settings. Constraints:
+
 - Max 14 days of pause per calendar year
 - Pause is set as a date range (start, end) or "until I unpause"
 - Days within a paused range do not count toward `daysSinceLastLog` for decay purposes
 
 Track total paused days per year in settings:
+
 ```typescript
 {
   decayPaused: boolean;
   decayPauseStartedAt: ISODate | null;
-  decayPausedDaysThisYear: number;  // resets Jan 1
+  decayPausedDaysThisYear: number; // resets Jan 1
 }
 ```
 
@@ -211,12 +219,14 @@ Track in settings: `firstDecayShown: boolean`. When decay is first applied (any 
 Always 3 missions per active day.
 
 **Generation trigger.** On every app foreground (including cold start), check the most recent daily mission set:
+
 - If no daily set exists for today (device local date), expire any still-`active` daily missions from prior days and generate today's set.
 - If today's set already exists, no-op.
 
 Days the user did not open the app produce **no missions** — there is no retroactive backfill, and prior days' missions are simply expired on the next foreground.
 
 **Generation rules:**
+
 - Identify the user's 3 lowest-level attributes (ties broken by `ATTRIBUTES` array order)
 - Pick one mission template targeting each
 - Templates are simple, e.g., "Move your body for 20 minutes (+50 STR XP)"
@@ -229,11 +239,13 @@ If the user has never logged anything, seed with a varied default set (one cardi
 Always 1 quest per active week. The "week" is Monday–Sunday in device local time.
 
 **Generation trigger.** On every app foreground, check the most recent weekly quest:
+
 - If no weekly quest exists for the current week, expire any still-`active` weekly from prior weeks and generate this week's quest.
 - If this week's quest already exists, no-op.
 - A user who skips multiple weeks gets only the current week's quest — no backfill.
 
 **Generation rules:**
+
 - Targets the user's lowest-level attribute over the trailing week
 - Binary in MVP — completed by a single qualifying log, e.g., "Have a long reading session this week"
 - Bonus XP is larger than daily (e.g., 150 XP)
@@ -244,6 +256,7 @@ Always 1 quest per active week. The "week" is Monday–Sunday in device local ti
 All MVP missions are **binary**: a single matching log completes them. (Multi-session accumulation like "Read 3 hours this week" is deferred post-MVP.)
 
 The AI returns `matched_missions: string[]` — a list of mission IDs the log applies to. The game engine:
+
 1. Validates each ID exists in the active missions list and is not already completed
 2. Marks the matched missions as completed
 3. Queues the bonus XP for each completed mission
@@ -255,6 +268,7 @@ Mission bonus XP **does not count against the daily cap.** It's applied as a sep
 Templates are stored as a static list in `src/game/missions.ts`. Each template has a stable `templateId`. When a mission is generated for a day or week, an **instance** is created with a unique `id` of the form `<templateId>_<YYYY-MM-DD>` (the date is the day generated for daily, or the Monday of the week for weekly).
 
 Template shape:
+
 ```typescript
 {
   templateId: 'daily_cardio_20',
@@ -267,6 +281,7 @@ Template shape:
 ```
 
 Instance shape (what the AI sees in `activeMissions`):
+
 ```typescript
 {
   id: 'daily_cardio_20_2026-05-07',  // unique per day
@@ -293,6 +308,7 @@ The AI receives instance IDs and returns instance IDs in `matchedMissions`. The 
 ### AI prompt anti-gaming
 
 The system prompt includes examples like:
+
 - "Climbed Mount Everest" → treat as a hike (~30 STR/CON XP)
 - "Ran a marathon" → high CON XP (60-80) but cap at 100 total
 - Confidence drops for vague logs ("crushed it today")
@@ -300,16 +316,21 @@ The system prompt includes examples like:
 ## Edge cases
 
 ### Empty log
+
 Reject before sending to AI. UI shows "type something first."
 
 ### Log on app reinstall (no character)
+
 Route to onboarding. Don't process the log.
 
 ### Multiple logs same day
+
 All apply normally, subject to the daily cap.
 
 ### Very old `daysSinceLastLog` (e.g., 90 days)
+
 Decay still applies but capped — in-progress XP can decay to zero, but the level stays. After 90 days of decay at 1%, multiplier is `0.99^88 ≈ 0.41`, so 59% of in-progress XP is lost. Levels untouched.
 
 ### Clock manipulation
+
 For MVP, don't defend against this. If a user changes their phone clock to fake streaks, they're cheating themselves. Revisit if/when social features ship.

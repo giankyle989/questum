@@ -9,6 +9,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 **Goal:** A blank Expo app on the user's iPhone with SQLite, navigation, and state management ready.
 
 **Tasks:**
+
 1. Initialize Expo project with TypeScript template
 2. Configure strict TypeScript (`strict: true`, `noUncheckedIndexedAccess: true`)
 3. Install and configure: Zustand, expo-sqlite, expo-router, NativeWind
@@ -22,6 +23,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 11. Create `src/ai/AIService.ts` interface and `src/ai/schema.ts` Zod schemas (no implementations yet — those are Phase 3)
 
 **Acceptance criteria:**
+
 - App launches on iPhone via Expo Go without errors
 - Database file is created on first launch
 - Navigation between empty screens works
@@ -38,6 +40,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 **Goal:** All game logic implemented as pure functions with comprehensive unit tests. No UI yet.
 
 **Tasks:**
+
 1. Implement `src/game/constants.ts` with all values from `GAME_RULES.md`
 2. Implement `src/game/xp.ts`: XP application, level threshold, character level calculation
 3. Implement `src/game/streak.ts`: streak update logic with date math
@@ -48,6 +51,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 8. Set up Jest with coverage reporting; aim for 100% coverage of `src/game/`
 
 **Acceptance criteria:**
+
 - `npm test` passes with 100% coverage of `src/game/`
 - All edge cases from `GAME_RULES.md` have explicit tests
 - No imports from React, storage, or any other layer in `src/game/`
@@ -55,6 +59,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 - Test names read like specifications
 
 **Specific test cases that MUST exist:**
+
 - XP application with daily cap clamping
 - Level-up across single threshold
 - Level-up across multiple thresholds in one log
@@ -77,6 +82,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 **Goal:** Fully functional app on the user's iPhone using `MockAIService`. The user can complete onboarding, log activities, see XP gains, level up, and view history.
 
 **Tasks:**
+
 1. Implement `MockAIService` per `MOCK_AI.md`
 2. Implement onboarding flow (3 slides + character creation + first log)
 3. Implement Character Sheet screen with live data from store
@@ -88,6 +94,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 9. Wire up the full data flow: log → AI → game engine → storage → state → UI
 
 **Acceptance criteria:**
+
 - User can complete onboarding from a fresh install
 - User can submit a log and see XP applied to attributes
 - Daily caps are visibly enforced (XP stops accumulating once cap hit)
@@ -106,6 +113,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 **Goal:** Ship-quality feel. Animations, notifications, mission generator, AI-unavailable banner.
 
 **Tasks:**
+
 1. XP gain reveal animation (Reanimated 3)
 2. Attribute bar fill animation
 3. Level-up modal with celebration animation
@@ -122,6 +130,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 14. App Store / Play Store metadata draft (description, keywords, screenshots plan)
 
 **Acceptance criteria:**
+
 - Every interaction has appropriate feedback (haptic, visual, or both)
 - Animations respect `reduceMotion` accessibility setting
 - Notifications fire reliably on test device
@@ -140,6 +149,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 **Goal:** Replace mock AIService with Apple Foundation Models on iOS. Validate via the AI spike protocol. (Gemini Nano + Android is deferred to Phase 6 — see Sequencing note above.)
 
 **Tasks:**
+
 1. Rent cloud Mac (MacinCloud pay-as-you-go) or use other Mac access
 2. Install Xcode 16+, Apple Developer account setup
 3. Create iOS dev build with `react-native-apple-llm` (or chosen library)
@@ -153,6 +163,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 8. Iterate on few-shot examples until acceptance criteria are met
 
 **Acceptance criteria:**
+
 - Schema validity ≥ 95% on the 30-log test set
 - Attribute correctness ≥ 85%
 - p95 latency < 5 seconds on iPhone 15 Pro
@@ -161,6 +172,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 - Privacy nutrition label finalized with accurate disclosures
 
 **If acceptance criteria fail:**
+
 - Document the gaps
 - Revisit prompt design
 - If models can't reach the bar, the product premise needs rethinking — escalate before proceeding
@@ -172,6 +184,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 Not a build phase, but the final gate before shipping.
 
 **Tasks (iOS-only for v1):**
+
 1. EAS Build production iOS binary
 2. App Store Connect setup: pricing (₱499/$9.99), screenshots, description, keywords
 3. **Configure App Store Connect Supported Devices list** to only Apple Intelligence-capable iPhones (iPhone 15 Pro, 15 Pro Max, all iPhone 16/17 series, and any newer Apple-Intelligence devices). Verify with App Store Connect's preview that the listing is hidden on incompatible devices.
@@ -191,6 +204,7 @@ Not a build phase, but the final gate before shipping.
 **Goal:** Bring Questum to Gemini Nano-capable Android devices.
 
 **Tasks (sketch — refine when phase begins):**
+
 1. Implement `GeminiNanoService` per `AI_CONTRACT.md` using ML Kit GenAI Prompt API or AICore directly
 2. Wire `aiServiceFactory.ts` to return `GeminiNanoService` on Android when probe succeeds
 3. Run the AI spike protocol on a Pixel 8+ and a Galaxy S24+ to validate equivalent quality to iOS
@@ -207,12 +221,14 @@ Not a build phase, but the final gate before shipping.
 ## What to do when stuck on a phase
 
 If a task in a phase blocks for >2 days:
+
 1. Write down exactly what's failing and why
 2. Check if the blocker is a known issue in the relevant library's GitHub issues
 3. Consider if the task can be deferred to a later phase without breaking the current phase's acceptance criteria
 4. Ask in this conversation with full context — don't silently work around
 
 If a phase's acceptance criteria can't be met within 2x the estimated time:
+
 1. Stop and re-evaluate scope
 2. Identify what can be cut
 3. Don't push partial work into the next phase to "make progress"

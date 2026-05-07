@@ -183,6 +183,7 @@ Decay is calculated **on app foreground**, not via background tasks. Reasons:
 ### Triggers
 
 Subscribe to React Native's `AppState` and recalculate decay on every transition to `active`. This covers:
+
 - Cold start
 - Resume from background after any duration (including across midnight)
 

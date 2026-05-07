@@ -18,27 +18,27 @@ All values are sRGB hex. Define once in `src/game/constants.ts` and consume via 
 
 ### Surfaces and text
 
-| Token | Hex | Use |
-|---|---|---|
-| `bg` | `#0E1116` | Screen background |
-| `surface` | `#161B22` | Cards, missions, modals, mission rows |
-| `surface-2` | `#1A1F26` | Bar tracks (empty XP), inset surfaces |
-| `border` | `#2A2F36` | All hairline borders, dividers |
-| `text` | `#E6EDF3` | Primary text |
-| `text-mute` | `#9AA4AE` | Secondary text (descriptions, level numbers next to bars) |
-| `text-dim` | `#7D8590` | Tertiary text (tiny labels, timestamps) |
-| `accent` | `#E8C547` | Gold — streak chip, primary buttons, level-up moment, FAB. Reserved for moments. |
+| Token       | Hex       | Use                                                                              |
+| ----------- | --------- | -------------------------------------------------------------------------------- |
+| `bg`        | `#0E1116` | Screen background                                                                |
+| `surface`   | `#161B22` | Cards, missions, modals, mission rows                                            |
+| `surface-2` | `#1A1F26` | Bar tracks (empty XP), inset surfaces                                            |
+| `border`    | `#2A2F36` | All hairline borders, dividers                                                   |
+| `text`      | `#E6EDF3` | Primary text                                                                     |
+| `text-mute` | `#9AA4AE` | Secondary text (descriptions, level numbers next to bars)                        |
+| `text-dim`  | `#7D8590` | Tertiary text (tiny labels, timestamps)                                          |
+| `accent`    | `#E8C547` | Gold — streak chip, primary buttons, level-up moment, FAB. Reserved for moments. |
 
 ### Attribute colors
 
-| Attribute | Hex | Notes |
-|---|---|---|
-| STR | `#C97A6E` | Terracotta |
-| DEX | `#8FB29D` | Sage |
-| CON | `#D49E63` | Amber |
-| INT | `#7D9BC4` | Slate blue |
-| WIS | `#A892C7` | Dusty violet |
-| CHA | `#C786A4` | Rose |
+| Attribute | Hex       | Notes        |
+| --------- | --------- | ------------ |
+| STR       | `#C97A6E` | Terracotta   |
+| DEX       | `#8FB29D` | Sage         |
+| CON       | `#D49E63` | Amber        |
+| INT       | `#7D9BC4` | Slate blue   |
+| WIS       | `#A892C7` | Dusty violet |
+| CHA       | `#C786A4` | Rose         |
 
 These colors are the **single source of truth** for attribute-coded UI: bars, labels, icons, history rail, mission checkbox borders, recent-log XP numbers. Never substitute the gold accent for an attribute color.
 
@@ -52,23 +52,24 @@ These colors are the **single source of truth** for attribute-coded UI: bars, la
 
 **Manrope** (Google Fonts, loaded via expo-font). Weights: 400, 500, 600, 700, 800.
 
-| Style | Size | Weight | Spacing | Use |
-|---|---|---|---|---|
-| Display | 26 px | 700 | -0.5 px | Pitch hero, screen-headline hero |
-| Numeric | 32 px | 800 | -1 px | Level-up new level (the large "Intelligence 7") |
-| Heading | 18 px | 700 | -0.4 px | Screen titles (Quests, History) |
-| Title | 15 px | 700 | -0.3 px | Character name, log entry title |
-| Body | 13 px | 600 | normal | Mission descriptions, history rows, reveal copy |
-| Body-mute | 12 px | 500 | normal | Subtitles, descriptions in muted text |
-| Caption | 11 px | 500 | 0.4 px | Bar level/XP numbers, FAB label, secondary copy |
-| Caption-bold | 11 px | 700 | 0.4 px | Streak day count, "+34" XP-gain numbers |
-| Tiny label | 9 px | 600 | 1.4 px, uppercase | Section labels ("Today", "Recent"), pitch hero kicker |
+| Style        | Size  | Weight | Spacing           | Use                                                   |
+| ------------ | ----- | ------ | ----------------- | ----------------------------------------------------- |
+| Display      | 26 px | 700    | -0.5 px           | Pitch hero, screen-headline hero                      |
+| Numeric      | 32 px | 800    | -1 px             | Level-up new level (the large "Intelligence 7")       |
+| Heading      | 18 px | 700    | -0.4 px           | Screen titles (Quests, History)                       |
+| Title        | 15 px | 700    | -0.3 px           | Character name, log entry title                       |
+| Body         | 13 px | 600    | normal            | Mission descriptions, history rows, reveal copy       |
+| Body-mute    | 12 px | 500    | normal            | Subtitles, descriptions in muted text                 |
+| Caption      | 11 px | 500    | 0.4 px            | Bar level/XP numbers, FAB label, secondary copy       |
+| Caption-bold | 11 px | 700    | 0.4 px            | Streak day count, "+34" XP-gain numbers               |
+| Tiny label   | 9 px  | 600    | 1.4 px, uppercase | Section labels ("Today", "Recent"), pitch hero kicker |
 
 No serif fonts. No display fonts beyond Manrope. Bold + size differentiates hierarchy.
 
 ## Components
 
 ### `<AttributeBar>`
+
 - Track: 4 px tall, `surface-2` background, 2 px corner radius
 - Fill: attribute color, animated via Reanimated `withSpring` from old % to new %
 - Label row above the bar: attribute three-letter name (left, attribute color, weight 700) + level/XP (right, `text-mute`, weight 500, e.g. "Lv 4 · 60/100")
@@ -77,22 +78,26 @@ No serif fonts. No display fonts beyond Manrope. Bold + size differentiates hier
 - Reveal variant (transient): track grows to 6 px, fill gains a soft 12 px attribute-colored glow during the gain animation, then collapses back
 
 ### `<StreakIndicator>`
+
 - Pill: `surface` background, 1 px `border`, 10 px corner radius
 - Flame glyph 11×11 px in `accent` (gold), followed by integer day count in `accent` weight 700 caption size
 - Live value computed at render time per `GAME_RULES.md` "Displayed streak" rule (zero shown when broken, even before next log)
 
 ### `<AvatarGlyph>`
+
 - 40 px hex outline (1 px `border`) on `surface`
 - Inner solid hex at one of the six attribute colors, 85% opacity
 - Six preset variants for character creation. `character.avatar_id` stores one of: `'hex_str'`, `'hex_dex'`, `'hex_con'`, `'hex_int'`, `'hex_wis'`, `'hex_cha'`. The suffix selects which attribute color fills the inner hex.
 - No human portraits. No photo upload. No customisation in MVP beyond preset selection.
 
 ### `<AttributeIcon>`
+
 - Default size 11 px (used in `AttributeBar`); also 14 px for mission-row markers and the larger reveal context. Caller passes `size` prop.
 - 1.4 px stroke width, `currentColor` (caller passes the attribute color via parent)
 - Set: STR (barbell-like rectangle silhouette), DEX (triangle / arrowhead), CON (clock with hand), INT (book with two lines), WIS (concentric circles / target), CHA (heart-curve / wave). Icons are pictographs — readable at 11 px in monochrome.
 
 ### `<MissionRow>`
+
 - `surface` background, 14 px corner radius, 1 px `border`
 - Left: 18 px square checkbox. Incomplete: 1.4 px attribute-color outline. Complete: filled attribute color with white check glyph.
 - Center: mission description (body, weight 600). Subtitle: "+50 ATTR" plus state ("expires Sun" / "earned").
@@ -100,18 +105,21 @@ No serif fonts. No display fonts beyond Manrope. Bold + size differentiates hier
 - Daily and weekly use the same component; weekly's border is gold-tinged (`#3D3122`) to distinguish at a glance.
 
 ### `<HistoryRow>`
+
 - 3 px attribute-colored vertical rail (left, full row height)
 - Title (body, weight 600) + total XP (caption, weight 700, attribute-colored, right-aligned)
 - Subtitle: time · duration/quantity · per-attribute XP breakdown (`text-dim` caption)
 - Grouped under date headings (tiny labels: "Today", "Yesterday", "May 5", etc.)
 
 ### `<FloatingActionButton>` (the "+")
+
 - 48 px gold circle, 50% radius
 - White-bg-on-bg `+` glyph (24 px char, weight 700, color `bg`)
 - Shadow `0 6px 16px rgba(232,197,71,0.4)`
 - Lives bottom-right of CharacterSheet, 18 px from bottom and right edges
 
 ### `<LevelUpModal>`
+
 - Full-screen `surface`-to-`bg` vertical gradient
 - Centered SVG radial burst: concentric stroke rings at 0.15/0.3/0.5 opacity, 8 spoke lines at 0.7 opacity, hex outline, new level number rendered into the SVG at numeric size
 - Caption: "Level Up" tiny label in gold
@@ -121,7 +129,9 @@ No serif fonts. No display fonts beyond Manrope. Bold + size differentiates hier
 - Dismissable via tap outside or Continue
 
 ### `<XPGainReveal>`
+
 Sequence on log submit (see Motion section for timing):
+
 1. Modal frame stays mounted; subtitle changes to "Reading your log…" with the tiny gold label
 2. AI returns; subtitle updates to AI summary (in quotes)
 3. Non-affected bars fade to 30% opacity (200 ms)
@@ -133,16 +143,16 @@ Sequence on log submit (see Motion section for timing):
 
 Library: Reanimated 3 + Moti (per locked stack). All durations target 60 fps; values are guides, not strict.
 
-| Moment | Animation | Duration |
-|---|---|---|
-| Bar fill (XP gain) | `withSpring(toValue, { damping: 18, stiffness: 140 })` per affected bar | ~500 ms |
-| Bar dim (non-affected) | `withTiming(0.3, { duration: 200 })` | 200 ms |
-| Bar redim back | `withTiming(1, { duration: 250 })` | 250 ms |
-| Number tick-up | Linear interpolate from old to new XP value, ~500 ms, 30 fps is fine | 500 ms |
-| Level-up entry | Scale 0.9 → 1.0 + opacity 0 → 1 on the radial burst, then number scales 0.7 → 1.0 with overshoot | 600 ms total |
-| Streak milestone (3, 7, 30 day) | Subtle gold pulse on the streak chip — scale 1.0 → 1.08 → 1.0 | 400 ms |
-| Decay shimmer | Continuous horizontal gradient sweep, 4 s loop | 4 s loop |
-| FAB tap | Scale 1.0 → 0.92 → 1.0 with haptic light impact | 150 ms |
+| Moment                          | Animation                                                                                        | Duration     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | ------------ |
+| Bar fill (XP gain)              | `withSpring(toValue, { damping: 18, stiffness: 140 })` per affected bar                          | ~500 ms      |
+| Bar dim (non-affected)          | `withTiming(0.3, { duration: 200 })`                                                             | 200 ms       |
+| Bar redim back                  | `withTiming(1, { duration: 250 })`                                                               | 250 ms       |
+| Number tick-up                  | Linear interpolate from old to new XP value, ~500 ms, 30 fps is fine                             | 500 ms       |
+| Level-up entry                  | Scale 0.9 → 1.0 + opacity 0 → 1 on the radial burst, then number scales 0.7 → 1.0 with overshoot | 600 ms total |
+| Streak milestone (3, 7, 30 day) | Subtle gold pulse on the streak chip — scale 1.0 → 1.08 → 1.0                                    | 400 ms       |
+| Decay shimmer                   | Continuous horizontal gradient sweep, 4 s loop                                                   | 4 s loop     |
+| FAB tap                         | Scale 1.0 → 0.92 → 1.0 with haptic light impact                                                  | 150 ms       |
 
 **Reduce motion:** when `AccessibilityInfo.isReduceMotionEnabled()` returns true, disable bar fill animation (snap to new value), skip the level-up entry animation (modal appears in place), drop streak pulse, drop decay shimmer (use a static 0.55-opacity bar instead).
 
@@ -205,6 +215,7 @@ export const ATTRIBUTE_COLORS = {
 ## Acceptance for the visual layer
 
 The visual layer is "done" when:
+
 - All eight screens shown in the brainstorm mockup are buildable from the tokens here
 - A new screen can be added without reaching outside the palette/typography defined here
 - Every attribute reference (icon, bar, label, history rail, mission checkbox) draws its color from `ATTRIBUTE_COLORS` and never hard-codes

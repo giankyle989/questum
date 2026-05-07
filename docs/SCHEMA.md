@@ -138,6 +138,7 @@ CREATE TABLE settings (
 ```
 
 Known keys (typed in TypeScript wrappers):
+
 - `notifications_enabled` ('true' | 'false')
 - `notification_morning_time` ('HH:MM')
 - `decay_paused` ('true' | 'false')
@@ -162,6 +163,7 @@ CREATE TABLE schema_version (
 ```
 
 Migration runner on app start:
+
 1. Read `schema_version` (or 0 if table doesn't exist)
 2. Apply all migrations with `version > current` in order
 3. Insert into `schema_version` after each
@@ -178,7 +180,7 @@ export async function getCharacter(): Promise<Character | null>;
 export async function createCharacter(name: string, avatarId: string): Promise<Character>;
 
 // src/storage/repositories/logRepo.ts
-export async function getLastLogDay(): Promise<string | null>;  // YYYY-MM-DD or null
+export async function getLastLogDay(): Promise<string | null>; // YYYY-MM-DD or null
 ```
 
 Repositories never apply game rules. They read and write rows.
@@ -186,6 +188,7 @@ Repositories never apply game rules. They read and write rows.
 ## Backup considerations (post-MVP)
 
 For v1.1 cloud backup:
+
 - Export entire database as JSON
 - Upload to iCloud (iOS) / Google Drive (Android) using platform APIs
 - No server-side storage by Anthropic of project owner

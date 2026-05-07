@@ -10,15 +10,15 @@ Given a free-text log of what a user did, return structured XP and attribute dat
 
 ```typescript
 interface ClassifyLogInput {
-  text: string;                          // raw user log, e.g., "ran 5km this morning"
+  text: string; // raw user log, e.g., "ran 5km this morning"
   activeMissions: ActiveMissionSummary[]; // current daily/weekly missions
-  currentStreak: number;                  // current streak length in days
-  timeOfDay?: string;                     // optional, ISO time
+  currentStreak: number; // current streak length in days
+  timeOfDay?: string; // optional, ISO time
 }
 
 interface ActiveMissionSummary {
-  id: string;            // full instance ID, e.g., 'daily_cardio_20_2026-05-07'
-  description: string;   // human-readable, for AI matching
+  id: string; // full instance ID, e.g., 'daily_cardio_20_2026-05-07'
+  description: string; // human-readable, for AI matching
   attribute: Attribute;
 }
 ```
@@ -27,13 +27,13 @@ interface ActiveMissionSummary {
 
 ```typescript
 interface LogResult {
-  summary: string;                          // short label, max 60 chars
-  primaryAttribute: Attribute;              // STR | DEX | CON | INT | WIS | CHA
-  attributeXP: Record<Attribute, number>;   // 0 for unaffected attributes
-  totalXP: number;                          // 0-100
-  matchedMissions: string[];                // mission IDs from input
-  confidence: number;                       // 0.0 - 1.0
-  improvementDetected: boolean;             // true if log indicates exceeding prior record
+  summary: string; // short label, max 60 chars
+  primaryAttribute: Attribute; // STR | DEX | CON | INT | WIS | CHA
+  attributeXP: Record<Attribute, number>; // 0 for unaffected attributes
+  totalXP: number; // 0-100
+  matchedMissions: string[]; // mission IDs from input
+  confidence: number; // 0.0 - 1.0
+  improvementDetected: boolean; // true if log indicates exceeding prior record
 }
 ```
 
@@ -120,6 +120,7 @@ Return JSON matching the provided schema. No prose, no explanation.
 ### Few-shot examples (must include in prompt)
 
 At least 5 examples covering:
+
 1. Simple single-attribute log
 2. Multi-attribute log
 3. Vague log (low confidence)
@@ -151,22 +152,24 @@ See `MOCK_AI.md` for the keyword-based classifier spec.
 
 ## Failure modes and handling
 
-| Failure | Handling |
-|---|---|
-| AI returns invalid JSON | Retry once, then fall back to mock classifier output |
-| AI returns valid JSON but fails Zod schema | Retry once, then fall back to mock |
-| AI takes >10s | Show a "still thinking..." indicator; if >20s, cancel via `AbortSignal` and fall back to mock |
-| User dismisses log modal mid-call | Caller aborts via `AbortSignal`; no fallback used, result discarded |
-| On-device AI not available at runtime | Should be near-zero given store-level device gating (PRD §5.2). If it happens, app shows the inline AI-unavailable banner (UI_SPEC §"Runtime AI unavailability"); log entry disabled until next probe succeeds |
-| User submits empty log | Reject in UI, never call AI |
+| Failure                                    | Handling                                                                                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI returns invalid JSON                    | Retry once, then fall back to mock classifier output                                                                                                                                                           |
+| AI returns valid JSON but fails Zod schema | Retry once, then fall back to mock                                                                                                                                                                             |
+| AI takes >10s                              | Show a "still thinking..." indicator; if >20s, cancel via `AbortSignal` and fall back to mock                                                                                                                  |
+| User dismisses log modal mid-call          | Caller aborts via `AbortSignal`; no fallback used, result discarded                                                                                                                                            |
+| On-device AI not available at runtime      | Should be near-zero given store-level device gating (PRD §5.2). If it happens, app shows the inline AI-unavailable banner (UI_SPEC §"Runtime AI unavailability"); log entry disabled until next probe succeeds |
+| User submits empty log                     | Reject in UI, never call AI                                                                                                                                                                                    |
 
 ### Cancellation contract
 
 `classifyLog` accepts an optional `AbortSignal`. Caller obligations:
+
 - Pass a fresh `AbortController` per call.
 - Abort the signal when the user dismisses the log modal, navigates away, or a wrapping timeout fires.
 
 Implementation obligations:
+
 - Check `signal.aborted` before starting work and at any await boundary.
 - If the underlying model API supports cancellation, propagate it. If not (e.g. Apple Foundation Models in some versions), let the model finish but throw `AbortError` instead of returning the result.
 - Always throw a `DOMException` with `name === "AbortError"` on cancel — never resolve with a result post-abort.

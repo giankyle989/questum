@@ -9,6 +9,7 @@
 **Tech Stack:** Expo SDK (latest), React Native 0.79+, TypeScript 5.6+ strict, Expo Router v5, Zustand v5, expo-sqlite (modern async API), NativeWind v4, expo-font, react-native-svg, Zod v4, Jest + ts-jest, ESLint v9 (flat config) + `@typescript-eslint`, Prettier, Husky v9, EAS Build. Test-only: `better-sqlite3` for the migration runner unit tests.
 
 **Out of scope (do not implement):**
+
 - Any UI beyond placeholder screens that render their route name
 - Any function body in `src/game/*` other than `constants.ts`
 - Any `AIService` implementation (interface + Zod schemas only)
@@ -88,6 +89,7 @@ questum/
 ```
 
 **Repository allocation rationale.** `ARCHITECTURE.md` lists four repositories: `characterRepo`, `logRepo`, `missionRepo`, `settingsRepo`. Tables that aren't directly named (e.g. `attribute_state`, `streak`, `daily_xp_earned`) live with their owner aggregate:
+
 - `characterRepo` owns `character` + `attribute_state` + `streak` — all single-character state
 - `logRepo` owns `logs` + `log_attribute_xp` + `daily_xp_earned` — `daily_xp_earned` is a derived cache of log XP for the daily-cap enforcement and is tightly coupled to logs
 - `missionRepo` owns `missions`
@@ -102,6 +104,7 @@ PR title at end of section: `feat(setup): bootstrap Expo TypeScript project`
 ### Task A1: Initialize Expo project on a feature branch
 
 **Files:**
+
 - Create: entire project tree from `npx create-expo-app`
 - Create: `package.json` (generated)
 - Create: `tsconfig.json` (generated)
@@ -187,6 +190,7 @@ git commit -m "feat(setup): scaffold Expo TypeScript project with core deps"
 ### Task A2: Strict TypeScript + path alias
 
 **Files:**
+
 - Modify: `tsconfig.json`
 
 - [ ] **Step 1: Replace `tsconfig.json` content**
@@ -251,6 +255,7 @@ git commit -m "feat(setup): enable TypeScript strict mode and @/* path alias"
 ### Task A3: ESLint + Prettier with `consistent-type-imports`
 
 **Files:**
+
 - Create: `eslint.config.js` (flat config)
 - Create: `.prettierrc.json`
 - Create: `.prettierignore`
@@ -378,6 +383,7 @@ git commit -m "feat(setup): add ESLint flat config and Prettier with consistent-
 ### Task A4: README updates with setup instructions
 
 **Files:**
+
 - Modify: `README.md`
 
 The existing README documents the product. Add a "Local development setup" section near the bottom so a fresh clone can boot.
@@ -386,7 +392,7 @@ The existing README documents the product. Add a "Local development setup" secti
 
 After the existing "Project docs" section, append:
 
-```markdown
+````markdown
 ## Local development setup
 
 Prerequisites: Node 20+, npm 10+, Git, an iPhone 15 Pro or newer with the Expo Go app installed (iOS 26+).
@@ -402,18 +408,20 @@ npm run test        # should pass (after Section B)
 npm start
 # scan the QR code with Expo Go on your iPhone
 ```
+````
 
 The first time the app boots on a device it creates `questum.db` in the app's sandboxed storage and applies migrations. To reset: delete the app and reinstall via Expo Go (or call `expo-sqlite`'s `deleteDatabaseAsync` from a dev menu — wired in Phase 4).
 
 Branching: `develop` is the integration branch, `main` is the release branch. Open PRs against `develop` (see `docs/CONVENTIONS.md`).
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add README.md
 git commit -m "docs(setup): add local development setup instructions to README"
-```
+````
 
 ---
 
@@ -424,6 +432,7 @@ PR title: `feat(setup): test framework, scripts, and pre-commit hook`
 ### Task B1: Jest with ts-jest in node environment
 
 **Files:**
+
 - Create: `jest.config.js`
 - Modify: `package.json` (add `test` script and deps)
 
@@ -502,6 +511,7 @@ git commit -m "feat(setup): wire up Jest with ts-jest and node testEnvironment"
 ### Task B2: Husky pre-commit hook
 
 **Files:**
+
 - Create: `.husky/pre-commit`
 - Modify: `package.json` (add `prepare` script)
 
@@ -573,6 +583,7 @@ PR title: `feat(game): add Attribute type and design-system constants`
 ### Task C1: `src/game/constants.ts`
 
 **Files:**
+
 - Create: `src/game/constants.ts`
 - Create: `src/game/__tests__/constants.test.ts`
 
@@ -678,6 +689,7 @@ PR title: `feat(ai): scaffold AIService interface and Zod validators`
 ### Task D1: `src/ai/AIService.ts` interface
 
 **Files:**
+
 - Create: `src/ai/AIService.ts`
 
 Type-only import from `@/game/constants` is allowed by `ARCHITECTURE.md`'s type-only exception.
@@ -760,6 +772,7 @@ git commit -m "feat(ai): define AIService interface with AbortSignal cancellatio
 ### Task D2: `src/ai/schema.ts` Zod schemas
 
 **Files:**
+
 - Create: `src/ai/schema.ts`
 - Create: `src/ai/schema.test.ts`
 
@@ -835,7 +848,13 @@ describe('LogResultSchema', () => {
     expect(() =>
       LogResultSchema.parse({
         ...valid,
-        attributeXP: { STR: 0, DEX: 0, CON: 30, INT: 0, WIS: 0 } as unknown as typeof valid.attributeXP,
+        attributeXP: {
+          STR: 0,
+          DEX: 0,
+          CON: 30,
+          INT: 0,
+          WIS: 0,
+        } as unknown as typeof valid.attributeXP,
       }),
     ).toThrow();
   });
@@ -982,6 +1001,7 @@ PR title: `feat(storage): SQLite migration runner, repository skeletons`
 ### Task E1: `DbDriver` interface + production expo-sqlite adapter
 
 **Files:**
+
 - Create: `src/storage/db.ts`
 
 The driver interface lets us run the migration runner against `better-sqlite3` in Jest while production uses `expo-sqlite`. This keeps the migration runner unit-testable without booting React Native.
@@ -1056,6 +1076,7 @@ git commit -m "feat(storage): add DbDriver interface and expo-sqlite production 
 ### Task E2: Migration 001 inline SQL
 
 **Files:**
+
 - Create: `src/storage/migrations/001_initial.ts`
 - Create: `src/storage/migrations/index.ts`
 
@@ -1172,6 +1193,7 @@ git commit -m "feat(storage): add 001_initial migration with all SCHEMA.md table
 ### Task E3: Migration runner with TDD
 
 **Files:**
+
 - Create: `src/storage/testHelpers.ts`
 - Create: `src/storage/migrations.ts`
 - Create: `src/storage/migrations.test.ts`
@@ -1269,9 +1291,7 @@ describe('applyMigrations', () => {
   });
 
   it('applies only newer migrations on partial state', async () => {
-    const v1Only: Migration[] = [
-      { version: 1, sql: 'CREATE TABLE foo (id INTEGER PRIMARY KEY);' },
-    ];
+    const v1Only: Migration[] = [{ version: 1, sql: 'CREATE TABLE foo (id INTEGER PRIMARY KEY);' }];
     await applyMigrations(driver, v1Only);
 
     const v1AndV2: Migration[] = [
@@ -1421,6 +1441,7 @@ git commit -m "feat(storage): add migration runner with idempotent forward-only 
 ### Task E4: Repository skeletons
 
 **Files:**
+
 - Create: `src/storage/repositories/characterRepo.ts`
 - Create: `src/storage/repositories/logRepo.ts`
 - Create: `src/storage/repositories/missionRepo.ts`
@@ -1664,6 +1685,7 @@ PR title: `feat(lib): add central logger`
 ### Task F1: `src/lib/logger.ts`
 
 **Files:**
+
 - Create: `src/lib/logger.ts`
 
 `CONVENTIONS.md` requires a central logger so we don't sprinkle `console.log` (which the lint rule blocks). In Phase 1 we just wrap `console`; production silencing of `debug`/`info` lands in Phase 4 alongside the production build.
@@ -1730,6 +1752,7 @@ PR title: `feat(state): scaffold Zustand store shapes`
 ### Task G1: All four stores
 
 **Files:**
+
 - Create: `src/state/characterStore.ts`
 - Create: `src/state/logsStore.ts`
 - Create: `src/state/missionsStore.ts`
@@ -1912,6 +1935,7 @@ PR title: `feat(ui): wire NativeWind to design tokens and load Manrope`
 ### Task H1: Install and configure NativeWind v4
 
 **Files:**
+
 - Create: `tailwind.config.js`
 - Create: `global.css`
 - Create or modify: `babel.config.js`
@@ -2031,6 +2055,7 @@ git commit -m "feat(ui): configure NativeWind v4 and wire color tokens to game c
 ### Task H2: Load Manrope via `@expo-google-fonts/manrope`
 
 **Files:**
+
 - Modify: `package.json` (add dep)
 - Modify: `app/_layout.tsx` (or create — see Task I1, which depends on this)
 
@@ -2066,9 +2091,11 @@ PR title: `feat(ui): expo-router placeholder screens with DB init and font gate`
 ### Task I1: Root layout with DB init + font gate
 
 **Files:**
+
 - Modify or create: `app/_layout.tsx`
 
 Replace whatever the Expo scaffold generated with our gated layout. The layout:
+
 1. Loads Manrope via `useFonts`
 2. Opens the SQLite DB and runs migrations
 3. Renders `<Slot />` only when both are ready, otherwise a minimal "Loading…" fallback
@@ -2184,6 +2211,7 @@ git commit -m "feat(ui): wire root layout with Manrope font gate and SQLite migr
 ### Task I2: `app/index.tsx` route resolver
 
 **Files:**
+
 - Modify or create: `app/index.tsx`
 
 Per `ARCHITECTURE.md`, the index route picks between onboarding and the main app based on `settings.onboarding_complete`. In Phase 1 the settings store is a skeleton, so we just default to onboarding.
@@ -2220,6 +2248,7 @@ git commit -m "feat(ui): route between onboarding and main app via settings stor
 ### Task I3: Onboarding placeholder
 
 **Files:**
+
 - Create: `app/onboarding.tsx`
 
 - [ ] **Step 1: Create the placeholder**
@@ -2263,6 +2292,7 @@ git commit -m "feat(ui): add onboarding placeholder screen"
 ### Task I4: Main tabs layout
 
 **Files:**
+
 - Create: `app/(main)/_layout.tsx`
 
 - [ ] **Step 1: Create the tabs layout**
@@ -2319,6 +2349,7 @@ git commit -m "feat(ui): add main tabs layout (character, missions, history, set
 ### Task I5: Five placeholder tab screens
 
 **Files:**
+
 - Create: `app/(main)/character.tsx`
 - Create: `app/(main)/missions.tsx`
 - Create: `app/(main)/history.tsx`
@@ -2432,6 +2463,7 @@ PR title: `feat(setup): app config and EAS development build profile`
 ### Task J1: Convert `app.json` to `app.config.ts` with iOS settings
 
 **Files:**
+
 - Delete: `app.json` (after migrating its content)
 - Create: `app.config.ts`
 
@@ -2519,6 +2551,7 @@ git commit -m "feat(setup): convert app.json to typed app.config.ts with iOS 26 
 ### Task J2: EAS Build profiles (iOS only)
 
 **Files:**
+
 - Create: `eas.json`
 
 Phase 1 doesn't actually run EAS builds (no Mac, no Apple Developer account yet). The config is in place so Phase 5 can flip the switch.
@@ -2606,6 +2639,7 @@ Expected: Metro starts. The terminal shows a QR code and a localhost URL.
 - [ ] **Step 2: Open Expo Go on the iPhone and scan the QR code**
 
 Expected:
+
 - App downloads the JS bundle and renders the "Loading…" splash for ~1–2 seconds (font + DB init)
 - Then renders the `Onboarding` placeholder screen (because `onboardingComplete` defaults to `false` in the settings store)
 - No red error screen
@@ -2706,6 +2740,7 @@ EOF
 - [ ] **Step 2: Self-review the diff in the PR view**
 
 Read every file change in the PR. Confirm:
+
 - No accidental `console.log` calls in shipped paths (logger only)
 - No `any` types and no unexplained `@ts-ignore`
 - All cross-layer imports between `game/` and `ai/` use `import type ... from`

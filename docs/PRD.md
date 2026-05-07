@@ -27,6 +27,7 @@ Most habit apps fail because they ask users to do extra work — logging, config
 These users have low cheating incentive — logging fake activities defeats the purpose, since the goal is real-world self-improvement.
 
 **Anti-personas:**
+
 - Power users wanting analytics, exports, custom rules
 - Users seeking medical or fitness coaching
 - Users wanting hardcore punishment mechanics (character death, lockouts)
@@ -37,14 +38,14 @@ These users have low cheating incentive — logging fake activities defeats the 
 
 Six attributes mapped to real-life domains:
 
-| Attribute | Domain | Example activities |
-|---|---|---|
-| STR | Physical exertion | Lifting, sports, manual labor, hiking |
-| DEX | Skill and coordination | Cooking, music, crafts, fine motor |
-| CON | Health and endurance | Cardio, sleep, hydration, healthy meals |
-| INT | Learning and analysis | Studying, reading nonfiction, courses |
-| WIS | Reflection and discipline | Meditation, journaling, planning |
-| CHA | Social and expression | Calls, hangouts, presentations, creative work |
+| Attribute | Domain                    | Example activities                            |
+| --------- | ------------------------- | --------------------------------------------- |
+| STR       | Physical exertion         | Lifting, sports, manual labor, hiking         |
+| DEX       | Skill and coordination    | Cooking, music, crafts, fine motor            |
+| CON       | Health and endurance      | Cardio, sleep, hydration, healthy meals       |
+| INT       | Learning and analysis     | Studying, reading nonfiction, courses         |
+| WIS       | Reflection and discipline | Meditation, journaling, planning              |
+| CHA       | Social and expression     | Calls, hangouts, presentations, creative work |
 
 ### 4.2 XP and leveling
 
@@ -66,6 +67,7 @@ This rewards both consistency and progressive overload without punishing routine
 ### 4.4 Streak multiplier
 
 Logging on consecutive days adds a small multiplier:
+
 - Day 1-2: 1.00x
 - Day 3-4: 1.05x
 - Day 5-6: 1.10x
@@ -119,6 +121,7 @@ Together these filters effectively eliminate the "paid but can't run" scenario.
 ### 5.3 Runtime fallback (graceful degradation)
 
 Even with strict store gating, runtime AI probe can still fail in rare cases:
+
 - The user disables Apple Intelligence in iOS Settings
 - A required system model isn't yet downloaded
 - TestFlight or sideloaded builds don't pass through store filters
@@ -172,6 +175,7 @@ Launch at higher anchor, run launch-week sale.
 **North star:** Weekly active users with at least 3 logs
 
 **Supporting:**
+
 - Activation rate: % of installs completing onboarding + first log
 - Day-7 retention
 - Day-30 retention (the real test)

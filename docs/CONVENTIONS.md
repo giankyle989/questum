@@ -19,12 +19,14 @@
 ## Imports
 
 Order:
+
 1. React / React Native
 2. External libraries
 3. Internal absolute imports (use path alias `@/`)
 4. Relative imports
 
 Configure path alias in `tsconfig.json`:
+
 ```json
 "paths": { "@/*": ["src/*"] }
 ```
@@ -34,7 +36,7 @@ Configure path alias in `tsconfig.json`:
 - Pure functions in `src/game/` only. Pure means: no I/O, no Math.random, no Date.now, no global state.
 - Date.now and Date construction are passed in as parameters to game functions for testability:
   ```typescript
-  function shouldDecay(lastLogAt: string, now: Date): boolean
+  function shouldDecay(lastLogAt: string, now: Date): boolean;
   ```
 - Avoid classes for business logic. Prefer functions and plain data.
 - Avoid optional parameters that change behavior. Prefer separate functions or required configuration objects.
@@ -48,7 +50,8 @@ Configure path alias in `tsconfig.json`:
 ## State management (Zustand)
 
 - One store per domain (character, logs, missions, settings).
-- **Cross-store reads are allowed via `getState()` snapshots inside actions.** Cross-store *subscriptions* (e.g. `useOtherStore(selector)` or `useOtherStore.subscribe(...)` from inside another store) are not. Reading another store's snapshot does not couple their render lifecycles; subscribing does.
+- **Cross-store reads are allowed via `getState()` snapshots inside actions.** Cross-store _subscriptions_ (e.g. `useOtherStore(selector)` or `useOtherStore.subscribe(...)` from inside another store) are not. Reading another store's snapshot does not couple their render lifecycles; subscribing does.
+
   ```typescript
   // OK — snapshot read inside an action
   const character = useCharacterStore.getState().character;
@@ -56,6 +59,7 @@ Configure path alias in `tsconfig.json`:
   // NOT OK — creates a subscription dependency between stores
   const character = useCharacterStore((s) => s.character);
   ```
+
 - Store actions are async functions that:
   1. Call repositories or services
   2. Apply game functions (pure)
@@ -102,7 +106,13 @@ interface AttributeBarProps {
   decayedToday?: boolean;
 }
 
-export function AttributeBar({ attribute, level, inProgressXP, threshold, decayedToday = false }: AttributeBarProps) {
+export function AttributeBar({
+  attribute,
+  level,
+  inProgressXP,
+  threshold,
+  decayedToday = false,
+}: AttributeBarProps) {
   // ...
 }
 ```
@@ -110,16 +120,19 @@ export function AttributeBar({ attribute, level, inProgressXP, threshold, decaye
 ## Testing
 
 ### Game engine
+
 - Jest with `ts-jest`
 - Aim for 100% line and branch coverage of `src/game/`
 - Test names should read like specifications: `it('does not decay during the 2-day grace period', () => {...})`
 
 ### Components
+
 - React Native Testing Library
 - Test user-visible behavior, not implementation details
 - One smoke test per screen at minimum (renders without crashing)
 
 ### What NOT to test
+
 - Storage layer (covered by integration testing on device)
 - AI services (covered by the spike, not unit tests)
 - Generated code from libraries
@@ -127,6 +140,7 @@ export function AttributeBar({ attribute, level, inProgressXP, threshold, decaye
 ## Commits
 
 Conventional Commits format:
+
 ```
 <type>(<scope>): <subject>
 
@@ -137,6 +151,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `style`.
 Scopes (optional): `game`, `ai`, `ui`, `storage`, `state`, `notifications`.
 
 Examples:
+
 - `feat(game): implement decay calculation with grace period`
 - `fix(ui): xp gain animation no longer skips on rapid logs`
 - `test(game): add edge case for level-up across multiple thresholds`
@@ -151,6 +166,7 @@ Keep commits small and atomic. A failing build between commits is unacceptable.
 - Use PRs against `develop` even when working alone. Forces a review pass.
 
 PR description must include:
+
 - What changed
 - Why
 - Which docs were updated (if any)
@@ -165,7 +181,7 @@ PR description must include:
 
 ## Comments
 
-- Comments explain *why*, not *what*. The code shows what.
+- Comments explain _why_, not _what_. The code shows what.
 - Prefer self-documenting names over comments.
 - TODO comments must include either a date or a tracking issue: `// TODO(2026-06-01): handle this edge case`
 - No commented-out code in commits. Delete it.

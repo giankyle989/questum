@@ -19,7 +19,10 @@ Lowercase, split on whitespace and punctuation:
 
 ```typescript
 function tokenize(text: string): string[] {
-  return text.toLowerCase().split(/[\s,.!?;:'"()]+/).filter(Boolean);
+  return text
+    .toLowerCase()
+    .split(/[\s,.!?;:'"()]+/)
+    .filter(Boolean);
 }
 ```
 
@@ -29,30 +32,146 @@ Keyword → attribute mapping. First match wins for primary; all matches contrib
 
 ```typescript
 const ATTRIBUTE_KEYWORDS: Record<Attribute, string[]> = {
-  STR: ['gym', 'lift', 'lifted', 'lifting', 'workout', 'pushup', 'pushups', 'pullup', 'pullups',
-        'squat', 'squats', 'deadlift', 'bench', 'sport', 'sports', 'soccer', 'basketball',
-        'climbed', 'climbing', 'hike', 'hiked', 'hiking', 'carried', 'moved'],
+  STR: [
+    'gym',
+    'lift',
+    'lifted',
+    'lifting',
+    'workout',
+    'pushup',
+    'pushups',
+    'pullup',
+    'pullups',
+    'squat',
+    'squats',
+    'deadlift',
+    'bench',
+    'sport',
+    'sports',
+    'soccer',
+    'basketball',
+    'climbed',
+    'climbing',
+    'hike',
+    'hiked',
+    'hiking',
+    'carried',
+    'moved',
+  ],
 
-  DEX: ['cooked', 'cooking', 'baked', 'baking', 'guitar', 'piano', 'drums', 'music',
-        'painted', 'painting', 'drew', 'drawing', 'craft', 'crafts', 'sewing', 'knitting',
-        'practiced', 'practice'],
+  DEX: [
+    'cooked',
+    'cooking',
+    'baked',
+    'baking',
+    'guitar',
+    'piano',
+    'drums',
+    'music',
+    'painted',
+    'painting',
+    'drew',
+    'drawing',
+    'craft',
+    'crafts',
+    'sewing',
+    'knitting',
+    'practiced',
+    'practice',
+  ],
 
-  CON: ['ran', 'run', 'running', 'jog', 'jogged', 'jogging', 'cardio', 'cycling', 'biked',
-        'swim', 'swam', 'swimming', 'walked', 'walking', 'slept', 'sleep', 'water',
-        'hydrated', 'meal', 'breakfast', 'lunch', 'dinner', 'rested'],
+  CON: [
+    'ran',
+    'run',
+    'running',
+    'jog',
+    'jogged',
+    'jogging',
+    'cardio',
+    'cycling',
+    'biked',
+    'swim',
+    'swam',
+    'swimming',
+    'walked',
+    'walking',
+    'slept',
+    'sleep',
+    'water',
+    'hydrated',
+    'meal',
+    'breakfast',
+    'lunch',
+    'dinner',
+    'rested',
+  ],
 
-  INT: ['read', 'reading', 'studied', 'studying', 'study', 'learned', 'learning',
-        'course', 'tutorial', 'book', 'article', 'paper', 'lecture', 'coding', 'coded',
-        'programmed', 'puzzle', 'solved'],
+  INT: [
+    'read',
+    'reading',
+    'studied',
+    'studying',
+    'study',
+    'learned',
+    'learning',
+    'course',
+    'tutorial',
+    'book',
+    'article',
+    'paper',
+    'lecture',
+    'coding',
+    'coded',
+    'programmed',
+    'puzzle',
+    'solved',
+  ],
 
-  WIS: ['meditated', 'meditation', 'meditate', 'journal', 'journaled', 'journaling',
-        'reflected', 'reflection', 'planned', 'planning', 'plan', 'breath', 'breathing',
-        'mindful', 'mindfulness'],
+  WIS: [
+    'meditated',
+    'meditation',
+    'meditate',
+    'journal',
+    'journaled',
+    'journaling',
+    'reflected',
+    'reflection',
+    'planned',
+    'planning',
+    'plan',
+    'breath',
+    'breathing',
+    'mindful',
+    'mindfulness',
+  ],
 
-  CHA: ['called', 'call', 'phone', 'talked', 'talked', 'met', 'meeting', 'hangout',
-        'hung', 'lunch', 'dinner', 'friend', 'friends', 'family', 'mom', 'dad',
-        'presentation', 'spoke', 'speech', 'wrote', 'writing', 'posted', 'shared',
-        'sang', 'singing'],
+  CHA: [
+    'called',
+    'call',
+    'phone',
+    'talked',
+    'talked',
+    'met',
+    'meeting',
+    'hangout',
+    'hung',
+    'lunch',
+    'dinner',
+    'friend',
+    'friends',
+    'family',
+    'mom',
+    'dad',
+    'presentation',
+    'spoke',
+    'speech',
+    'wrote',
+    'writing',
+    'posted',
+    'shared',
+    'sang',
+    'singing',
+  ],
 };
 ```
 
@@ -64,9 +183,9 @@ Look for duration cues:
 
 ```typescript
 const DURATION_PATTERNS: Array<{ pattern: RegExp; minutes: number }> = [
-  { pattern: /(\d+)\s*(hour|hr|hrs)/i, minutes: -1 },  // multiplied by 60 below
+  { pattern: /(\d+)\s*(hour|hr|hrs)/i, minutes: -1 }, // multiplied by 60 below
   { pattern: /(\d+)\s*(min|mins|minute|minutes)/i, minutes: 1 },
-  { pattern: /(\d+)\s*km/i, minutes: 6 },              // ~6 min per km, rough
+  { pattern: /(\d+)\s*km/i, minutes: 6 }, // ~6 min per km, rough
   { pattern: /(\d+)\s*pages?/i, minutes: 2 },
   { pattern: /(\d+)\s*chapters?/i, minutes: 20 },
 ];
@@ -86,6 +205,7 @@ function extractDurationMinutes(text: string): number | null {
 ### Step 4: Compute XP
 
 Base XP per matched attribute:
+
 - No keyword match for an attribute → 0 XP
 - Match found, no duration → 15 XP
 - Match found, with duration → `min(50, max(10, durationMinutes / 2))`
@@ -126,7 +246,7 @@ export class MockAIService implements AIService {
   readonly displayName = 'Mock (development)';
 
   async isAvailable(): Promise<boolean> {
-    return true;  // always available
+    return true; // always available
   }
 
   async classifyLog(input: ClassifyLogInput): Promise<LogResult> {
@@ -138,7 +258,7 @@ export class MockAIService implements AIService {
     const matchedMissions = matchMissions(tokens, input.activeMissions);
     const confidence = computeConfidence(
       countNonZero(attributeXP),
-      extractDurationMinutes(input.text) !== null
+      extractDurationMinutes(input.text) !== null,
     );
 
     return {
@@ -157,6 +277,7 @@ export class MockAIService implements AIService {
 ## Testing the mock
 
 Unit tests for the mock should cover:
+
 - Returns valid schema for any input string (including empty, weird unicode, very long)
 - Deterministic: same input twice returns identical output
 - Specific examples that exercise each branch
@@ -166,6 +287,7 @@ This isn't user-facing quality — it's just enough not to break the rest of the
 ## When to delete this
 
 Phase 5 introduces real AI implementations. The mock STAYS in the codebase as:
+
 - A fallback when both real AI implementations fail validation
 - A development/test tool
 
@@ -174,6 +296,7 @@ Move it to `src/ai/MockAIService.ts` permanently. Don't delete.
 ## What the mock will NOT handle
 
 These cases will look bad with the mock and good with real AI:
+
 - "naglinis ng bahay" (Tagalog: cleaned house) — no English keywords
 - "leg day was brutal lmao" — slang, no clear duration
 - "crushed it today" — no specifics

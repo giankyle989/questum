@@ -55,6 +55,7 @@ After first log submitted: set `onboarding_complete = true`, navigate to charact
 The most-visited screen. Must be alive — animations on every load.
 
 Layout, top to bottom:
+
 - Avatar + character name + total level (large)
 - Streak indicator (small, top-right): "🔥 7 days"
 - Six attribute bars, each showing: attribute name, level, XP progress to next level, faint shimmer if decayed today
@@ -79,6 +80,7 @@ Opens as a bottom sheet from the floating button.
   - Auto-close back to character sheet after ~2 seconds
 
 Error and degraded states:
+
 - **Empty input:** button disabled, no error.
 - **AI returns valid but low-confidence result** (`confidence < 0.3` per `AI_CONTRACT.md`): do NOT apply XP. Show inline message "We couldn't categorize that confidently — try a more specific log." Keep input populated for editing. Treat this as a soft state (in-modal banner), not a destructive toast.
 - **AI fails twice:** fall back to mock per AI_CONTRACT's failure handling. If even the mock returns low confidence, show the same inline message above. Otherwise apply the mock's result silently (Phase 5+) — but in Phase 3 with the mock as primary, treat low confidence the same way.
@@ -91,11 +93,13 @@ Error and degraded states:
 Two sections: Active and Completed.
 
 **Active:**
+
 - Daily missions (today's 3) — each shows description, attribute icon, and a binary completion state (incomplete / complete)
 - Weekly quest — same binary state
 - Time remaining for each ("expires in 8h" / "expires Sunday")
 
 **Completed:**
+
 - List of recently completed missions, last 30 days
 - Each shows description, completion date, bonus XP earned
 
@@ -104,6 +108,7 @@ Two sections: Active and Completed.
 Chronological list of all logs.
 
 Each row:
+
 - Date + time
 - AI summary (e.g., "Morning run + algorithms reading")
 - Total XP earned
@@ -119,29 +124,35 @@ Infinite scroll with pagination (50 logs per page).
 Sectioned list:
 
 **Profile**
+
 - Character name (tap to edit)
 - Avatar (tap to change)
 
 **AI Source**
+
 - Read-only display: "Apple Intelligence" / "Gemini Nano" / "Mock (development)"
 - Privacy info link
 
 **Notifications**
+
 - Toggle: Daily missions reminder
 - Time picker for morning notification
 - Toggle: Inactivity nudge (day 3+)
 
 **Decay**
+
 - Toggle: Pause decay
 - If paused: show "X / 14 days used this year"
 - Resume button
 
 **About**
+
 - App version
 - Privacy policy link
 - Restore purchase button
 
 **Developer (debug builds only)**
+
 - Reset character button
 - Switch AI source dropdown
 - View raw logs DB
@@ -155,6 +166,7 @@ If the runtime AI probe still fails (e.g., the user disabled Apple Intelligence 
 > "Apple Intelligence is currently unavailable. Enable it in Settings to log activities."
 
 While this banner is showing:
+
 - The Log Entry FAB is disabled (visually muted, tap shows a toast linking to Settings)
 - All other screens (Character, Missions, History, Settings) remain fully usable read-only
 - The banner has a "Open Settings" deep link (iOS: `App-prefs:` URL scheme; Android: `Intent.ACTION_APPLICATION_DETAILS_SETTINGS`)
@@ -167,21 +179,27 @@ This is a recoverable degraded state, not a marketing surface. No screen, no ema
 Built in `src/ui/components/`. Each is a pure presentational component receiving props.
 
 ### `<AttributeBar>`
+
 Props: attribute name, level, in-progress XP, threshold, decayedToday boolean. Renders bar + label + level indicator.
 
 ### `<XPGainReveal>`
+
 Props: gains object (attribute → XP delta). Animates numbers ticking up on each affected bar.
 
 ### `<LevelUpModal>`
+
 Props: attribute, newLevel. Full-screen celebration overlay, dismissable.
 
 ### `<MissionCard>`
+
 Props: mission object, onTap. Renders description, attribute icon, progress dots/bar, expiry.
 
 ### `<StreakIndicator>`
+
 Props: streak length. Renders flame icon + day count.
 
 ### `<LogRow>`
+
 Props: log object, onTap. Used in history list.
 
 ## Animations
@@ -189,6 +207,7 @@ Props: log object, onTap. Used in history list.
 Phase 4 priority. Use Reanimated 3 + Moti.
 
 Critical animations (must feel good before launch):
+
 - XP gain reveal (numbers tick up smoothly)
 - Bar fill (animates from old XP to new)
 - Level-up burst (radial particle effect, sound effect optional)
@@ -206,6 +225,7 @@ Critical animations (must feel good before launch):
 Single dark theme for MVP. Light theme optional in Phase 4 if time permits.
 
 Color palette (defined in NativeWind config):
+
 - Background: deep navy
 - Surface: slightly lighter navy
 - Primary: gold accent (level-up moments)
