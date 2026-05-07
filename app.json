@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": ".questum-tmp",
-    "slug": ".questum-tmp",
+    "name": "Questum",
+    "slug": "questum",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "questumtmp",
+    "scheme": "questum",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
