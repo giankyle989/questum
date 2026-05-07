@@ -54,6 +54,7 @@
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
     "better-sqlite3": "^12.9.0",
+    "eas-cli": "^18.11.0",
     "eslint": "^9.39.4",
     "eslint-config-expo": "~10.0.0",
     "eslint-config-prettier": "^10.1.8",
