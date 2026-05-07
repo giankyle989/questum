@@ -47,7 +47,15 @@ Configure path alias in `tsconfig.json`:
 
 ## State management (Zustand)
 
-- One store per domain (character, logs, missions, settings). Don't share state across stores via direct imports — pass through actions.
+- One store per domain (character, logs, missions, settings).
+- **Cross-store reads are allowed via `getState()` snapshots inside actions.** Cross-store *subscriptions* (e.g. `useOtherStore(selector)` or `useOtherStore.subscribe(...)` from inside another store) are not. Reading another store's snapshot does not couple their render lifecycles; subscribing does.
+  ```typescript
+  // OK — snapshot read inside an action
+  const character = useCharacterStore.getState().character;
+
+  // NOT OK — creates a subscription dependency between stores
+  const character = useCharacterStore((s) => s.character);
+  ```
 - Store actions are async functions that:
   1. Call repositories or services
   2. Apply game functions (pure)
@@ -136,9 +144,11 @@ Examples:
 
 Keep commits small and atomic. A failing build between commits is unacceptable.
 
-## PRs (if applicable, even for solo dev)
+## Branching and PRs
 
-Use PRs against `main` even when working alone. Forces a review pass.
+- `develop` is the integration branch. All feature work lands here via PR.
+- `main` is the release branch. Only updated when shipping a build (typically by merging `develop` into `main` and tagging).
+- Use PRs against `develop` even when working alone. Forces a review pass.
 
 PR description must include:
 - What changed

@@ -17,7 +17,7 @@ interface ClassifyLogInput {
 }
 
 interface ActiveMissionSummary {
-  id: string;            // e.g., 'daily_cardio_20'
+  id: string;            // full instance ID, e.g., 'daily_cardio_20_2026-05-07'
   description: string;   // human-readable, for AI matching
   attribute: Attribute;
 }
@@ -67,6 +67,8 @@ export type LogResult = z.infer<typeof LogResultSchema>;
 ```
 
 If validation fails: retry once. If it fails again: return a low-confidence fallback (primary attribute = highest keyword match, totalXP = 10, confidence = 0.2). Never throw to the UI.
+
+**Fallback is always on-device** (mock keyword classifier). There is never a cloud-AI fallback in MVP — the "on-device only" rule from PRD §9 is preserved by routing through the local mock when real models fail.
 
 ## System prompt design
 
@@ -153,9 +155,21 @@ See `MOCK_AI.md` for the keyword-based classifier spec.
 |---|---|
 | AI returns invalid JSON | Retry once, then fall back to mock classifier output |
 | AI returns valid JSON but fails Zod schema | Retry once, then fall back to mock |
-| AI takes >10s | Show a "still thinking..." indicator; if >20s, cancel and use mock |
+| AI takes >10s | Show a "still thinking..." indicator; if >20s, cancel via `AbortSignal` and fall back to mock |
+| User dismisses log modal mid-call | Caller aborts via `AbortSignal`; no fallback used, result discarded |
 | On-device AI not available at runtime | Should never happen post-soft-gate; if it does, route to waitlist |
 | User submits empty log | Reject in UI, never call AI |
+
+### Cancellation contract
+
+`classifyLog` accepts an optional `AbortSignal`. Caller obligations:
+- Pass a fresh `AbortController` per call.
+- Abort the signal when the user dismisses the log modal, navigates away, or a wrapping timeout fires.
+
+Implementation obligations:
+- Check `signal.aborted` before starting work and at any await boundary.
+- If the underlying model API supports cancellation, propagate it. If not (e.g. Apple Foundation Models in some versions), let the model finish but throw `AbortError` instead of returning the result.
+- Always throw a `DOMException` with `name === "AbortError"` on cancel — never resolve with a result post-abort.
 
 ## Latency targets
 

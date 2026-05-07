@@ -178,5 +178,7 @@ These cases will look bad with the mock and good with real AI:
 - "leg day was brutal lmao" — slang, no clear duration
 - "crushed it today" — no specifics
 - "did the thing" — meaningless to keywords
+- **Contextual improvement detection** — the mock only catches explicit keywords (`longest`, `pr`, `record`, etc.). Logs like "finished a coding project I was stuck on for weeks" or "lifted heavier than I have all year" require contextual reasoning the mock can't do, so `improvementDetected` will often be false in Phase 3 even when real AI would set it true.
+- **Summary quality** — mock returns `text.slice(0, 60)` (raw truncation). Real AI returns a written summary, e.g., `"Morning run + algorithms reading"`. The History screen will look noticeably different in Phase 5 once real summaries land. UI must not depend on summary format beyond max length.
 
 This is fine for development. When testing in Phase 3, use logs with clear English keywords. The hard cases come back during the AI spike.

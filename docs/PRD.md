@@ -77,8 +77,8 @@ Streak resets if the user misses a day (subject to grace period below).
 
 Slacking has a small, visible cost. Always on (not opt-in).
 
-- **Grace period:** First 2 inactive days, no decay
-- **Decay rate:** Day 3+, each attribute loses 1% of in-progress XP per day, caps at 5%/day
+- **Grace period:** No decay if `daysSinceLastLog ≤ 2`
+- **Decay rate:** Starting at `daysSinceLastLog = 3`, each attribute loses 1% of in-progress XP per day (compound; see `GAME_RULES.md`)
 - **Floor:** Decay never reduces a level. Once at level N, stays at level N. Only progress toward next level decays.
 - **Restoration:** A single log stops decay for the day, restores full earning rate
 - **Pause mode:** User can pause decay for vacations or sick periods, max 14 days/year
@@ -90,7 +90,7 @@ Slacking has a small, visible cost. Always on (not opt-in).
 - **Daily missions:** 3 generated each morning, weighted toward the user's lower attributes
 - **Weekly quests:** 1 longer-form mission per week
 - **Adaptive seeding:** Generated from the user's recent log patterns and weakest attributes — no upfront goal-setting
-- **Mission progress:** Each log is checked against active missions by the AI, which returns matched mission IDs
+- **Mission completion:** Each log is checked against active missions by the AI, which returns matched mission IDs. All MVP missions are binary — a single matching log completes them. Multi-session accumulation is post-MVP.
 - **Rewards:** Bonus XP on completion. No currency, no equipment in MVP.
 
 ### 4.7 Anti-cheat
@@ -112,7 +112,7 @@ Slacking has a small, visible cost. Always on (not opt-in).
 On launch, app probes for on-device AI availability.
 
 - **Available:** Normal experience
-- **Not available:** Waitlist screen — "Questum requires on-device AI, which your device doesn't support yet. Want to be notified when we expand?" Capture email, store locally + send to a simple endpoint (TBD post-MVP).
+- **Not available:** Waitlist screen — "Questum requires on-device AI, which your device doesn't support yet. Want to be notified when we expand?" Capture email, store locally only at MVP. A remote sync endpoint is TBD post-MVP — when it ships, the App Store privacy label must change from "Data Not Collected" to reflect email collection (see §9).
 
 The user can still browse the pitch screens and see what the app offers. They cannot create a character or log activities.
 

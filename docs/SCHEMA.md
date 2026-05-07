@@ -12,13 +12,14 @@ Single-row table for the user's character. Enforced by `id = 1` constraint.
 
 ```sql
 CREATE TABLE character (
-  id            INTEGER PRIMARY KEY CHECK (id = 1),
-  name          TEXT NOT NULL,
-  avatar_id     TEXT NOT NULL,
-  created_at    TEXT NOT NULL,    -- ISO 8601
-  last_log_date TEXT              -- ISO 8601 date (YYYY-MM-DD), null until first log
+  id          INTEGER PRIMARY KEY CHECK (id = 1),
+  name        TEXT NOT NULL,
+  avatar_id   TEXT NOT NULL,
+  created_at  TEXT NOT NULL    -- ISO 8601
 );
 ```
+
+The "last log day" is derived from `SELECT MAX(day) FROM logs` (uses `idx_logs_day`). It is NOT denormalized onto this table or onto `streak`.
 
 ### `attribute_state`
 
@@ -113,16 +114,17 @@ CREATE INDEX idx_missions_type_status ON missions(type, status);
 
 ### `streak`
 
-Single-row table tracking the user's streak.
+Single-row table tracking the user's streak length.
 
 ```sql
 CREATE TABLE streak (
-  id                INTEGER PRIMARY KEY CHECK (id = 1),
-  current_length    INTEGER NOT NULL DEFAULT 0,
-  longest_length    INTEGER NOT NULL DEFAULT 0,
-  last_log_day      TEXT                       -- YYYY-MM-DD
+  id              INTEGER PRIMARY KEY CHECK (id = 1),
+  current_length  INTEGER NOT NULL DEFAULT 0,
+  longest_length  INTEGER NOT NULL DEFAULT 0
 );
 ```
+
+The streak's "last log day" is the same as the character's last log day — both are derived from `SELECT MAX(day) FROM logs`. Streak update logic reads it via the log repository.
 
 ### `settings`
 
@@ -177,7 +179,7 @@ Migration runner on app start:
 2. Apply all migrations with `version > current` in order
 3. Insert into `schema_version` after each
 
-001_initial.sql contains all the tables above plus the seed for `attribute_state` (six rows) when the character is created.
+`001_initial.sql` contains the structure for all tables above. It does **not** seed `attribute_state` rows — that's character-creation logic, not schema. The six `attribute_state` rows (one per attribute, level 1, 0 XP) are inserted by `characterRepo.createCharacter()` in the same transaction that inserts the character row.
 
 ## Repository pattern
 
@@ -187,7 +189,9 @@ Each table gets a repository in `src/storage/repositories/` that returns plain T
 // src/storage/repositories/characterRepo.ts
 export async function getCharacter(): Promise<Character | null>;
 export async function createCharacter(name: string, avatarId: string): Promise<Character>;
-export async function updateLastLogDate(date: string): Promise<void>;
+
+// src/storage/repositories/logRepo.ts
+export async function getLastLogDay(): Promise<string | null>;  // YYYY-MM-DD or null
 ```
 
 Repositories never apply game rules. They read and write rows.

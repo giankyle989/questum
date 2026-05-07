@@ -16,6 +16,8 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 7. Set up navigation skeleton (empty screens)
 8. Configure EAS Build for development builds
 9. Get Expo Go running the app on user's iPhone
+10. Set up Husky pre-commit hook running `npm run lint` and `npm run typecheck`
+11. Create `src/ai/AIService.ts` interface and `src/ai/schema.ts` Zod schemas (no implementations yet — those are Phase 3)
 
 **Acceptance criteria:**
 - App launches on iPhone via Expo Go without errors
@@ -25,7 +27,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 - Lint and type-check pass with zero warnings
 - README with setup instructions for a fresh clone
 
-**Out of scope for Phase 1:** Any UI beyond placeholder screens. Any game logic. Any AI. Any animations.
+**Out of scope for Phase 1:** Any UI beyond placeholder screens. Any game logic. Any AI implementation (only the interface and schema). Any animations.
 
 ---
 

@@ -74,14 +74,23 @@ src/
 
 These rules are non-negotiable. Violating them will cause technical debt that compounds quickly.
 
-1. **`game/` depends on nothing.** Pure functions only. No React, no storage, no state management, no AI service. Game logic must be testable with `node --test` if needed.
-2. **`ai/` depends on nothing else in the app.** Returns parsed JSON via the AIService interface. Cannot import from `game/`, `storage/`, `ui/`, or `state/`.
+1. **`game/` depends on nothing at runtime.** Pure functions only. No React, no storage, no state management, no AI service. Game logic must be testable with `node --test` if needed.
+2. **`ai/` depends on nothing else in the app at runtime.** Returns parsed JSON via the AIService interface. Cannot import runtime values from `game/`, `storage/`, `ui/`, or `state/`.
 3. **`storage/` depends on nothing else.** Repositories return plain data; they don't apply game rules.
 4. **`state/` depends on `storage/` and `game/`.** Stores call repositories and apply game functions.
 5. **`ui/` depends on `state/`.** Screens and components read from stores and call store actions. UI never imports from `game/`, `storage/`, or `ai/` directly.
 6. **`notifications/` depends on `state/`.** Reads schedule data from settings store.
 
-If a feature requires breaking these rules, that's a signal the architecture needs revision — propose the change explicitly, don't slip it in.
+### Type-only import exception
+
+Rules 1 and 2 are about **runtime** dependencies. Type-only imports (`import type ...`) between `game/` and `ai/` are allowed because they erase at compile time and cannot affect runtime behavior or test isolation. Specifically:
+
+- `game/validation.ts` may `import type { LogResult } from '@/ai/AIService'` to clamp the AI's output.
+- `ai/schema.ts` may `import type { Attribute } from '@/game/constants'` to keep the Zod enum aligned with the canonical attribute list.
+
+Any non-type import between these layers is a violation. Lint rule (Phase 1): `@typescript-eslint/consistent-type-imports` enforces explicit `import type` syntax so violations are visible in code review.
+
+If a feature requires breaking the runtime rules, that's a signal the architecture needs revision — propose the change explicitly, don't slip it in.
 
 ## Data flow: a log submission
 
@@ -108,12 +117,16 @@ Notice: AI is one step. Game logic is several pure-function steps. UI never sees
 ```
 1. App launches
 2. Load settings from storage
-3. Probe on-device AI availability → cache result
-4. If no character exists → route to OnboardingScreen
-5. If on-device AI not available AND user is post-onboarding → route to WaitlistScreen
-6. Otherwise → load character, run decay calculation for elapsed days, route to CharacterSheetScreen
-7. Schedule daily morning notification (if enabled)
-8. Generate today's daily missions if not already generated
+3. Probe on-device AI availability → cache result for the session
+4. If onboarding_complete = false:
+   a. Route to OnboardingScreen (pitch slides always shown — PRD §5.2)
+   b. After AI check screen, if AI unavailable → route to WaitlistScreen, leave onboarding_complete = false
+   c. If AI available → continue to character creation, then first-log walkthrough
+5. If onboarding_complete = true:
+   a. If AI not available → route to WaitlistScreen
+   b. Else → load character, run decay calculation for elapsed days, route to CharacterSheetScreen
+6. Schedule daily morning notification (if enabled and on supported device)
+7. Run mission generation tick (expire stale, generate today's daily set and this week's quest if not already present — see `GAME_RULES.md`)
 ```
 
 ## AIService interface
@@ -127,8 +140,13 @@ export interface AIService {
   /** Returns true if this implementation can run on the current device. */
   isAvailable(): Promise<boolean>;
 
-  /** Classifies a log into structured XP/attribute data. */
-  classifyLog(input: ClassifyLogInput): Promise<LogResult>;
+  /**
+   * Classifies a log into structured XP/attribute data.
+   * Implementations must respect `signal` — if aborted, throw a DOMException
+   * with name "AbortError" rather than resolving. Implementations should also
+   * apply an internal timeout (default 10s) and abort themselves if exceeded.
+   */
+  classifyLog(input: ClassifyLogInput, signal?: AbortSignal): Promise<LogResult>;
 
   /** Human-readable name for settings screen ("Apple Intelligence", "Gemini Nano", "Mock"). */
   readonly displayName: string;
@@ -156,17 +174,29 @@ The mock and real implementations both satisfy this. The factory selects which t
 
 ## Decay timing
 
-Decay is calculated **on app open**, not via background tasks. Reasons:
+Decay is calculated **on app foreground**, not via background tasks. Reasons:
 
 - Background task reliability is poor on both platforms
 - Battery impact concerns
 - The user only cares about decay when they see the character
 
-On app open:
-1. Calculate days elapsed since last log (or last app open if longer)
-2. For each elapsed day, run decay function
-3. Persist updated XP values
-4. If first decay ever for this user, queue the explainer modal
+### Triggers
+
+Subscribe to React Native's `AppState` and recalculate decay on every transition to `active`. This covers:
+- Cold start
+- Resume from background after any duration (including across midnight)
+
+The recalc is idempotent: it reads `lastLogDay` and the current local date and applies the same compound formula. Re-running it within the same day is a no-op.
+
+**Known edge case** (not solved in MVP): if the app remains foregrounded continuously across local midnight, no `active` transition fires and decay won't recalculate until the next foreground transition. Acceptable — the user is engaged with the app, decay is the wrong concern, and the next log will refresh state anyway.
+
+### Steps on each foreground
+
+1. Read `lastLogDay` from `logRepo.getLastLogDay()`
+2. Compute `daysSinceLastLog` against today (device local date)
+3. Run the decay function over `daysSinceLastLog` (with grace and pause adjustments — see `GAME_RULES.md`)
+4. If any attribute's `inProgressXP` changed, persist updated values
+5. If first decay ever for this user (any non-zero reduction with `firstDecayShown=false`), set the explainer modal flag for the UI to pick up
 
 ## Persistence strategy
 

@@ -80,13 +80,13 @@ Re-run logs 1, 3, 6, 9, 14 a second time. Compare results. Variance >20% on tota
 
 ### Tier 7: Mission matching — 2 logs
 
-Stub two active missions in the test:
-- `daily_cardio`: "Move your body for 20 minutes"
-- `weekly_read_3h`: "Read for a total of 3 hours this week"
+Stub two active mission instances in the test (use the spike date for the suffix):
+- `daily_cardio_20_<DATE>`: "Move your body for 20 minutes"
+- `weekly_read_3h_<MONDAY>`: "Read for a total of 3 hours this week"
 
 | # | Log | Expected matched_missions |
 |---|---|---|
-| 24 | "Went for a 30 minute jog" | `['daily_cardio']` |
+| 24 | "Went for a 30 minute jog" | `['daily_cardio_20_<DATE>']` |
 | 25 | "Watched Netflix for 3 hours" | `[]` (Netflix is not reading) |
 
 (Note: numbering goes to 25 with the 5 consistency reruns counted, totaling 30 test runs.)

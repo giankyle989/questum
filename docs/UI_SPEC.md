@@ -22,10 +22,15 @@ Tab bar: Character / Missions / History / Settings. Log entry is a floating butt
 
 ```
 1. Load settings.onboarding_complete
-2. If false → /onboarding
-3. Probe AI availability
-4. If not available AND onboarding_complete → /waitlist
-5. Otherwise → /(main)/character
+2. Probe AI availability (cache result for the session)
+3. If onboarding_complete = false → /onboarding
+   - Pitch slides 1-3 are always shown (per PRD §5.2)
+   - AI capability check screen is reached after the pitch
+   - If AI unavailable: skip character creation and route to /waitlist
+   - If AI available: continue to character creation + first-log walkthrough
+4. If onboarding_complete = true:
+   - If AI not available → /waitlist
+   - Else → /(main)/character
 ```
 
 ## Screens
@@ -40,13 +45,17 @@ Three pitch slides + character creation flow.
 
 Then: AI capability check screen showing "Apple Intelligence detected" / "Gemini Nano detected" / "Your device doesn't support on-device AI yet" with privacy explainer.
 
+**If AI is unavailable:** end onboarding here and route to `/waitlist`. Do not proceed to character creation. `onboarding_complete` stays false (so the next launch shows the pitch again only if the user reinstalls or device gains support).
+
+**If AI is available:**
+
 Then: character creation — name input + 6 preset avatars in a grid.
 
 Then: first-log walkthrough — "Tell us one thing you did today to get started."
 
 After first log submitted: set `onboarding_complete = true`, navigate to character sheet.
 
-**Skippable:** Slides 1-3 have a "Skip" button. Character creation and first log are required.
+**Skippable:** Slides 1-3 have a "Skip" button. Character creation and first log are required (only on supported devices).
 
 ### CharacterSheetScreen (home)
 
@@ -76,18 +85,21 @@ Opens as a bottom sheet from the floating button.
   - If mission completed: show completion celebration after level-up
   - Auto-close back to character sheet after ~2 seconds
 
-Error states:
-- Empty input: button disabled, no error
-- AI fails twice: show "We couldn't categorize that — try being more specific" toast, keep input populated for editing
-- Network/storage error: "Something went wrong, try again" toast
+Error and degraded states:
+- **Empty input:** button disabled, no error.
+- **AI returns valid but low-confidence result** (`confidence < 0.3` per `AI_CONTRACT.md`): do NOT apply XP. Show inline message "We couldn't categorize that confidently — try a more specific log." Keep input populated for editing. Treat this as a soft state (in-modal banner), not a destructive toast.
+- **AI fails twice:** fall back to mock per AI_CONTRACT's failure handling. If even the mock returns low confidence, show the same inline message above. Otherwise apply the mock's result silently (Phase 5+) — but in Phase 3 with the mock as primary, treat low confidence the same way.
+- **AI cancelled** (user dismissed modal): no error state, no XP applied.
+- **Storage error after AI succeeds:** "Couldn't save your log. Try again." toast. Input preserved.
+- **Generic unexpected error:** "Something went wrong, try again" toast.
 
 ### MissionsScreen
 
 Two sections: Active and Completed.
 
 **Active:**
-- Daily missions (today's 3) with progress bars
-- Weekly quest with progress bar
+- Daily missions (today's 3) — each shows description, attribute icon, and a binary completion state (incomplete / complete)
+- Weekly quest — same binary state
 - Time remaining for each ("expires in 8h" / "expires Sunday")
 
 **Completed:**
