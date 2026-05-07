@@ -148,19 +148,6 @@ Known keys (typed in TypeScript wrappers):
 - `ai_source_last_used` ('apple' | 'gemini' | 'mock' | 'none')
 - `onboarding_complete` ('true' | 'false')
 
-### `waitlist_emails`
-
-For unsupported devices that opt into the waitlist. Stored locally; sent to a remote endpoint when networking is added (post-MVP).
-
-```sql
-CREATE TABLE waitlist_emails (
-  email          TEXT PRIMARY KEY,
-  created_at     TEXT NOT NULL,
-  device_info    TEXT,
-  synced         INTEGER NOT NULL DEFAULT 0    -- 0 = pending, 1 = sent
-);
-```
-
 ## Migrations
 
 Migration files: `src/storage/migrations/NNN_description.sql`. Numbered sequentially from 001.

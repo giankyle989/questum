@@ -82,9 +82,8 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 5. Implement Missions screen with active/completed sections
 6. Implement History screen with infinite scroll and filters
 7. Implement Settings screen
-8. Implement Waitlist screen (always reachable in development for testing)
-9. Wire up Zustand stores to repositories
-10. Wire up the full data flow: log → AI → game engine → storage → state → UI
+8. Wire up Zustand stores to repositories
+9. Wire up the full data flow: log → AI → game engine → storage → state → UI
 
 **Acceptance criteria:**
 - User can complete onboarding from a fresh install
@@ -102,7 +101,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 
 ## Phase 4 — Polish
 
-**Goal:** Ship-quality feel. Animations, notifications, mission generator, soft gate logic.
+**Goal:** Ship-quality feel. Animations, notifications, mission generator, AI-unavailable banner.
 
 **Tasks:**
 1. XP gain reveal animation (Reanimated 3)
@@ -116,7 +115,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 9. Implement actual mission generation algorithm (weighted toward weak attributes)
 10. Implement voice input (expo-speech-recognition)
 11. First-decay explainer modal
-12. Complete soft-gate logic (probe AI on launch, route appropriately)
+12. Implement runtime AI-unavailable banner per UI_SPEC §"Runtime AI unavailability" (banner UI, FAB disable, Settings deep link, foreground re-probe)
 13. App icon, splash screen, asset pipeline
 14. App Store / Play Store metadata draft (description, keywords, screenshots plan)
 
@@ -125,7 +124,7 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 - Animations respect `reduceMotion` accessibility setting
 - Notifications fire reliably on test device
 - Voice input works on iPhone
-- Soft gate routes correctly based on simulated AI availability
+- AI-unavailable banner appears, disables FAB, and clears on probe re-success when AI availability is toggled in dev tools
 - App icon and splash screen render correctly on device
 
 **Out of scope for Phase 4:** Real AI integration (still using mock). App Store submission.
@@ -174,13 +173,15 @@ Not a build phase, but the final gate before shipping.
 **Tasks:**
 1. EAS Build production iOS and Android binaries
 2. App Store Connect setup: pricing (₱499/$9.99), screenshots, description, keywords
-3. Play Console setup: same
-4. Privacy nutrition label submitted accurately
-5. App review notes prepared (explain on-device AI, why permissions are requested)
-6. Soft launch to a small TestFlight / Play Console internal track group
-7. Address review feedback
-8. Public launch with launch-week sale (₱349/$6.99)
-9. Monitor crash reports (expo-error-recovery / Sentry)
+3. **Configure App Store Connect Supported Devices list** to only Apple Intelligence-capable iPhones (iPhone 15 Pro, 15 Pro Max, all iPhone 16/17 series, and any newer Apple-Intelligence devices). Verify with App Store Connect's preview that the listing is hidden on incompatible devices.
+4. Play Console setup: same pricing and metadata
+5. **Configure Play Console Device Catalog** to whitelist Gemini Nano-capable devices (Pixel 8/8 Pro/9 series, Galaxy S24/S25 series, other AICore-capable devices verified at submit time). Verify with Play Console's device-availability preview.
+6. Privacy nutrition label submitted accurately ("Data Not Collected")
+7. App review notes prepared (explain on-device AI, why permissions are requested, why the device list is restrictive)
+8. Soft launch to a small TestFlight / Play Console internal track group
+9. Address review feedback
+10. Public launch with launch-week sale (₱349/$6.99)
+11. Monitor crash reports (expo-error-recovery / Sentry)
 
 ---
 

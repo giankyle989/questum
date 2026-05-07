@@ -47,7 +47,6 @@ src/
       MissionsScreen.tsx
       HistoryScreen.tsx
       SettingsScreen.tsx
-      WaitlistScreen.tsx       # Soft gate
     components/
       AttributeBar.tsx
       LevelUpModal.tsx
@@ -61,7 +60,7 @@ src/
 
   app/                     # Expo Router routes
     _layout.tsx
-    index.tsx              # Routes to onboarding, main, or waitlist
+    index.tsx              # Routes to onboarding or main
     (main)/
       character.tsx
       log.tsx
@@ -114,19 +113,20 @@ Notice: AI is one step. Game logic is several pure-function steps. UI never sees
 
 ## App startup sequence
 
+Store-level filtering (PRD §5.2) ensures the app only installs on supported devices, so the routing assumes AI is available. The runtime AI probe is a sanity check that drives an inline banner (UI_SPEC §"Runtime AI unavailability") when it fails, but it does not change the route.
+
 ```
 1. App launches
 2. Load settings from storage
 3. Probe on-device AI availability → cache result for the session
 4. If onboarding_complete = false:
-   a. Route to OnboardingScreen (pitch slides always shown — PRD §5.2)
-   b. After AI check screen, if AI unavailable → route to WaitlistScreen, leave onboarding_complete = false
-   c. If AI available → continue to character creation, then first-log walkthrough
+   a. Route to OnboardingScreen (pitch slides → AI confirmation → character creation → first log)
 5. If onboarding_complete = true:
-   a. If AI not available → route to WaitlistScreen
-   b. Else → load character, run decay calculation for elapsed days, route to CharacterSheetScreen
-6. Schedule daily morning notification (if enabled and on supported device)
+   a. Load character, run decay calculation for elapsed days
+   b. Route to CharacterSheetScreen
+6. Schedule daily morning notification (if enabled)
 7. Run mission generation tick (expire stale, generate today's daily set and this week's quest if not already present — see `GAME_RULES.md`)
+8. If the AI probe in step 3 returned false, the screens render with an inline AI-unavailable banner per UI_SPEC; log entry is disabled until the next foreground probe succeeds
 ```
 
 ## AIService interface

@@ -100,21 +100,34 @@ Slacking has a small, visible cost. Always on (not opt-in).
 - Code-side validation: XP capped at 100 per log; attribute gains capped at +5 per log post-AI
 - No competitive incentive in MVP — cheating only hurts the user's own experience
 
-## 5. Device support and soft gate
+## 5. Device support and store gating
 
 ### 5.1 Supported devices (MVP launch)
 
 - **iOS:** iPhone 15 Pro, 15 Pro Max, 16/16 Pro/16 Pro Max, 17 series, and newer (Apple Intelligence required)
 - **Android:** Pixel 8/8 Pro and newer, Galaxy S24/S25 series, and other devices with AICore + Gemini Nano
 
-### 5.2 Soft gate behavior
+### 5.2 Store-level gating (primary defense)
 
-On launch, app probes for on-device AI availability.
+Because Questum is a paid app, an incompatible buyer who pays $9.99 and can't use the app is the worst possible experience. The primary defense is the App Store / Play Store filters that prevent purchase from incompatible devices.
 
-- **Available:** Normal experience
-- **Not available:** Waitlist screen — "Questum requires on-device AI, which your device doesn't support yet. Want to be notified when we expand?" Capture email, store locally only at MVP. A remote sync endpoint is TBD post-MVP — when it ships, the App Store privacy label must change from "Data Not Collected" to reflect email collection (see §9).
+- **iOS:** Set `LSMinimumSystemVersion` to iOS 26 in `Info.plist`. At App Store Connect submission, manually set the Supported Devices list to only Apple Intelligence-capable iPhones (iPhone 15 Pro, 15 Pro Max, all iPhone 16 series, all iPhone 17 series, and any newer Apple-Intelligence devices at submit time). Note: there is no public `apple-intelligence` `UIRequiredDeviceCapabilities` key as of Phase 5 planning, so the manual device list is required.
+- **Android:** Set `minSdkVersion` to 34 in `AndroidManifest.xml`. In Play Console, use the Device Catalog to restrict installation to Gemini Nano-capable models (Pixel 8/8 Pro/9 series, Galaxy S24/S25 series, other AICore-capable models confirmed at submit time).
 
-The user can still browse the pitch screens and see what the app offers. They cannot create a character or log activities.
+Together these filters effectively eliminate the "paid but can't run" scenario.
+
+### 5.3 Runtime fallback (graceful degradation)
+
+Even with strict store gating, runtime AI probe can still fail in rare cases:
+- The user disables Apple Intelligence in iOS Settings
+- A required system model isn't yet downloaded
+- TestFlight or sideloaded builds don't pass through store filters
+
+When the runtime probe fails, the app does NOT show a marketing waitlist or capture an email. Instead it shows an inline banner on the affected screens explaining the situation and offering a recovery path:
+
+> "Apple Intelligence is currently unavailable. Enable it in iOS Settings to use Questum, or contact support if you believe this is in error."
+
+Log entry is disabled while AI is unavailable. The character sheet and history remain viewable so the user is not locked out of their own data. On the next foreground transition, the AI probe re-runs; if it now succeeds, the banner clears and log entry re-enables.
 
 ## 6. Onboarding (one-time, minimal)
 
@@ -203,4 +216,3 @@ If during development a competitor closes one of these gaps, revisit. The wedge 
 - Final app name and brand direction
 - Avatar system: preset only, or simple customization?
 - Decay rate tuning: ship at 1%/day, or A/B test alternatives?
-- Waitlist email collection: local-only, or simple Supabase/Firestore endpoint?

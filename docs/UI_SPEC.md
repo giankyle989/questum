@@ -8,7 +8,6 @@ Expo Router file-based routing.
 
 ```
 /onboarding            → OnboardingScreen (3 pitch slides + character creation)
-/waitlist              → WaitlistScreen (soft gate)
 /(main)/character      → CharacterSheetScreen (home tab)
 /(main)/log            → LogEntryScreen (modal sheet)
 /(main)/missions       → MissionsScreen (tab)
@@ -20,17 +19,13 @@ Tab bar: Character / Missions / History / Settings. Log entry is a floating butt
 
 ## Routing decisions on app open
 
+Store-level filtering (PRD §5.2) makes incompatible devices effectively impossible to reach the app, so routing assumes AI is available in the normal case. The runtime AI probe still runs as a sanity check; if it fails, the app shows a banner on the affected screens (see "Runtime AI unavailability" below) but does not change the route.
+
 ```
 1. Load settings.onboarding_complete
 2. Probe AI availability (cache result for the session)
 3. If onboarding_complete = false → /onboarding
-   - Pitch slides 1-3 are always shown (per PRD §5.2)
-   - AI capability check screen is reached after the pitch
-   - If AI unavailable: skip character creation and route to /waitlist
-   - If AI available: continue to character creation + first-log walkthrough
-4. If onboarding_complete = true:
-   - If AI not available → /waitlist
-   - Else → /(main)/character
+4. Else → /(main)/character
 ```
 
 ## Screens
@@ -43,11 +38,9 @@ Three pitch slides + character creation flow.
 **Slide 2:** "AI parses what you did. You just type." — show example log + result.
 **Slide 3:** "Six attributes. One you. Level up." — show six attribute bars.
 
-Then: AI capability check screen showing "Apple Intelligence detected" / "Gemini Nano detected" / "Your device doesn't support on-device AI yet" with privacy explainer.
+Then: AI confirmation + privacy explainer screen showing "Apple Intelligence detected" / "Gemini Nano detected" with a brief on-device privacy note. This is a confirmation beat, not a gate — store filtering ensures the user reaches this point only on a supported device.
 
-**If AI is unavailable:** end onboarding here and route to `/waitlist`. Do not proceed to character creation. `onboarding_complete` stays false (so the next launch shows the pitch again only if the user reinstalls or device gains support).
-
-**If AI is available:**
+If the runtime probe unexpectedly fails (rare — see "Runtime AI unavailability" below), surface the banner here too and disable the Continue button until the user resolves it (e.g., re-enables Apple Intelligence in iOS Settings).
 
 Then: character creation — name input + 6 preset avatars in a grid.
 
@@ -55,7 +48,7 @@ Then: first-log walkthrough — "Tell us one thing you did today to get started.
 
 After first log submitted: set `onboarding_complete = true`, navigate to character sheet.
 
-**Skippable:** Slides 1-3 have a "Skip" button. Character creation and first log are required (only on supported devices).
+**Skippable:** Slides 1-3 have a "Skip" button. Character creation and first log are required.
 
 ### CharacterSheetScreen (home)
 
@@ -153,17 +146,21 @@ Sectioned list:
 - Switch AI source dropdown
 - View raw logs DB
 
-### WaitlistScreen
+### Runtime AI unavailability
 
-Shown when on-device AI is unavailable.
+There is no separate "AI unavailable" screen and no email-capture waitlist. Store-level device filtering (PRD §5.2) makes the unsupported-device path effectively unreachable for paying users.
 
-- Headline: "Questum isn't ready for your device yet"
-- Body: Brief explanation that the app uses on-device AI and the user's phone doesn't support it
-- Email input + submit button
-- "We'll let you know when we expand support."
-- After submit: "You're on the list" confirmation, no further interaction
+If the runtime AI probe still fails (e.g., the user disabled Apple Intelligence in iOS Settings, a required system model hasn't downloaded, or the build is sideloaded), the app shows an **inline banner** at the top of whichever screen is currently active:
 
-User can re-open the app and the screen still appears. Email is stored locally and re-shown if already submitted.
+> "Apple Intelligence is currently unavailable. Enable it in Settings to log activities."
+
+While this banner is showing:
+- The Log Entry FAB is disabled (visually muted, tap shows a toast linking to Settings)
+- All other screens (Character, Missions, History, Settings) remain fully usable read-only
+- The banner has a "Open Settings" deep link (iOS: `App-prefs:` URL scheme; Android: `Intent.ACTION_APPLICATION_DETAILS_SETTINGS`)
+- On the next foreground transition, the AI probe re-runs; if it now succeeds, the banner clears and the FAB re-enables
+
+This is a recoverable degraded state, not a marketing surface. No screen, no email, no separate route.
 
 ## Components
 

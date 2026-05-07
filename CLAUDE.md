@@ -4,14 +4,14 @@
 
 Questum is a React Native (Expo) mobile app that turns real-life activities into RPG character progression. Users type what they did in natural language, on-device AI parses it into XP and attribute gains, and a character levels up over time. The product wedge is **friction-free logging via on-device AI** — Apple Foundation Models on iOS, Gemini Nano on Android.
 
-**Target platforms:** iOS 26+ (iPhone 15 Pro and newer) and Android 14+ with Gemini Nano support. Older devices see a "coming soon" waitlist screen (soft gate).
+**Target platforms:** iOS 26+ (iPhone 15 Pro and newer) and Android 14+ with Gemini Nano support. Distribution is gated at the store level (App Store Connect Supported Devices list + Play Console Device Catalog), so incompatible devices can't purchase. See `docs/PRD.md` §5 for the gating strategy.
 
 **Monetization:** One-time purchase. No cloud AI costs in MVP — strictly on-device only.
 
 ## Critical constraints
 
 1. **No Mac available during development.** Build everything that doesn't require Xcode first. The AI integration phase happens last, via cloud Mac rental (MacinCloud) for a single ~$10 session.
-2. **On-device AI only.** No cloud LLM fallback. Unsupported devices get the waitlist screen, not a degraded experience.
+2. **On-device AI only.** No cloud LLM fallback. Store-level filtering keeps unsupported devices from buying; rare runtime failures show an inline banner with a Settings deep link.
 3. **Local-first storage.** SQLite via expo-sqlite. No backend, no accounts, no sync in MVP.
 4. **TypeScript strict mode.** No `any`, no `@ts-ignore` without a comment explaining why.
 5. **Pure functions for game logic.** XP, leveling, decay, and mission matching must be pure and unit-tested. UI must never contain game rules.
@@ -23,7 +23,7 @@ The project is built in strict order. Do not start a phase before the previous o
 - **Phase 1:** Foundation — project setup, SQLite schema, state management, navigation skeleton
 - **Phase 2:** Game engine — pure logic for XP, leveling, decay, streaks, missions. Unit tested.
 - **Phase 3:** UI — all screens wired to a **mock AIService** (keyword-based classifier)
-- **Phase 4:** Polish — animations, notifications, mission generator, soft gate
+- **Phase 4:** Polish — animations, notifications, mission generator, AI-unavailable banner
 - **Phase 5:** Real AI integration — Apple Foundation Models + Gemini Nano. Requires Mac access. Last phase before App Store submission.
 
 The mock AIService in Phase 3 is scaffolding, NOT a fallback. The real AI must work for the product to ship. Phase 5 is non-negotiable before submission.
@@ -75,6 +75,6 @@ Do not add libraries outside this list without proposing the addition and gettin
 - All 5 phases complete
 - AI spike validated (>85% attribute correctness on the 30-log test set)
 - App runs on physical iPhone 15 Pro+ and a supported Android device
-- Soft gate works on unsupported devices
+- App Store Connect Supported Devices list and Play Console Device Catalog configured to exclude incompatible devices (verified via store-listing preview)
 - App Store and Play Store submission packages prepared via EAS Submit
 - Privacy nutrition label complete and accurate

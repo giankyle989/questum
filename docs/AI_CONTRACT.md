@@ -157,7 +157,7 @@ See `MOCK_AI.md` for the keyword-based classifier spec.
 | AI returns valid JSON but fails Zod schema | Retry once, then fall back to mock |
 | AI takes >10s | Show a "still thinking..." indicator; if >20s, cancel via `AbortSignal` and fall back to mock |
 | User dismisses log modal mid-call | Caller aborts via `AbortSignal`; no fallback used, result discarded |
-| On-device AI not available at runtime | Should never happen post-soft-gate; if it does, route to waitlist |
+| On-device AI not available at runtime | Should be near-zero given store-level device gating (PRD §5.2). If it happens, app shows the inline AI-unavailable banner (UI_SPEC §"Runtime AI unavailability"); log entry disabled until next probe succeeds |
 | User submits empty log | Reject in UI, never call AI |
 
 ### Cancellation contract

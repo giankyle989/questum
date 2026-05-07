@@ -27,7 +27,7 @@ Full mechanics: [`docs/GAME_RULES.md`](docs/GAME_RULES.md).
 - **iOS 26+** on Apple Intelligence devices (iPhone 15 Pro and newer) — Apple Foundation Models
 - **Android 14+** with Gemini Nano (Pixel 8+, Galaxy S24+, and others with AICore)
 
-Unsupported devices see a waitlist screen instead of a degraded experience.
+Distribution is gated at the store level — the App Store and Play Store hide Questum from incompatible devices, so unsupported users never get to purchase.
 
 ## Status
 
@@ -36,7 +36,7 @@ MVP in development. Built in five strict phases:
 1. **Foundation** — project setup, SQLite schema, state, navigation
 2. **Game engine** — pure logic for XP, leveling, decay, streaks, missions (unit tested)
 3. **UI** — all screens wired to a mock AI service
-4. **Polish** — animations, notifications, mission generator, soft gate
+4. **Polish** — animations, notifications, mission generator, AI-unavailable banner
 5. **Real AI integration** — Apple Foundation Models + Gemini Nano
 
 Full task breakdown: [`docs/PHASES.md`](docs/PHASES.md).
