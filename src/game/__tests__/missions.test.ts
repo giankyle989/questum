@@ -1,5 +1,10 @@
-import { MISSION_TEMPLATES, instanceIdFor, type MissionTemplate } from '@/game/missions';
-import { ATTRIBUTES } from '@/game/constants';
+import {
+  MISSION_TEMPLATES,
+  instanceIdFor,
+  generateDailyMissions,
+  type MissionTemplate,
+} from '@/game/missions';
+import { ATTRIBUTES, type Attribute } from '@/game/constants';
 
 describe('MISSION_TEMPLATES', () => {
   it('has at least one daily template per attribute', () => {
@@ -36,5 +41,73 @@ describe('MISSION_TEMPLATES', () => {
 describe('instanceIdFor', () => {
   it('joins templateId and ISO date with underscore', () => {
     expect(instanceIdFor('daily_con_cardio', '2026-05-08')).toBe('daily_con_cardio_2026-05-08');
+  });
+});
+
+const allLevel1 = (): Record<Attribute, number> => ({
+  STR: 1,
+  DEX: 1,
+  CON: 1,
+  INT: 1,
+  WIS: 1,
+  CHA: 1,
+});
+
+describe('generateDailyMissions', () => {
+  it('returns exactly 3 instances', () => {
+    const out = generateDailyMissions({
+      attributeLevels: allLevel1(),
+      today: '2026-05-08',
+      hasEverLogged: false,
+    });
+    expect(out).toHaveLength(3);
+  });
+
+  it('uses the default seed (CON, INT, CHA) when user has never logged', () => {
+    const out = generateDailyMissions({
+      attributeLevels: allLevel1(),
+      today: '2026-05-08',
+      hasEverLogged: false,
+    });
+    const attrs = out.map((m) => m.attribute);
+    expect(new Set(attrs)).toEqual(new Set(['CON', 'INT', 'CHA']));
+  });
+
+  it('targets the three lowest-level attributes for an experienced user (ties broken by ATTRIBUTES order)', () => {
+    // STR=5, DEX=2, CON=2, INT=4, WIS=2, CHA=3 → three lowest are DEX, CON, WIS (all 2)
+    const out = generateDailyMissions({
+      attributeLevels: { STR: 5, DEX: 2, CON: 2, INT: 4, WIS: 2, CHA: 3 },
+      today: '2026-05-08',
+      hasEverLogged: true,
+    });
+    const attrs = out.map((m) => m.attribute).sort();
+    expect(attrs).toEqual(['CON', 'DEX', 'WIS']);
+  });
+
+  it('picks deterministic templates per date (same input → same instance ids)', () => {
+    const a = generateDailyMissions({
+      attributeLevels: allLevel1(),
+      today: '2026-05-08',
+      hasEverLogged: true,
+    });
+    const b = generateDailyMissions({
+      attributeLevels: allLevel1(),
+      today: '2026-05-08',
+      hasEverLogged: true,
+    });
+    expect(a.map((m) => m.id)).toEqual(b.map((m) => m.id));
+  });
+
+  it('produces unique instance ids and consistent generatedFor', () => {
+    const out = generateDailyMissions({
+      attributeLevels: allLevel1(),
+      today: '2026-05-08',
+      hasEverLogged: false,
+    });
+    expect(new Set(out.map((m) => m.id)).size).toBe(3);
+    for (const m of out) {
+      expect(m.generatedFor).toBe('2026-05-08');
+      expect(m.type).toBe('daily');
+    }
   });
 });

@@ -1,5 +1,5 @@
 import type { ISODate } from '@/game/calendar';
-import type { Attribute } from '@/game/constants';
+import { ATTRIBUTES, type Attribute } from '@/game/constants';
 
 export type MissionType = 'daily' | 'weekly';
 
@@ -158,4 +158,71 @@ export interface MissionInstance {
 /** Build the unique instance id used in storage and AI input. */
 export function instanceIdFor(templateId: string, dateKey: ISODate): string {
   return `${templateId}_${dateKey}`;
+}
+
+const DEFAULT_SEED_ATTRIBUTES: readonly Attribute[] = ['CON', 'INT', 'CHA'];
+
+export interface GenerateDailyMissionsInput {
+  attributeLevels: Record<Attribute, number>;
+  today: ISODate;
+  /** False on a fresh install with no logs yet → use default seed. */
+  hasEverLogged: boolean;
+}
+
+export function generateDailyMissions(input: GenerateDailyMissionsInput): MissionInstance[] {
+  const targets = input.hasEverLogged
+    ? threeLowestAttributes(input.attributeLevels)
+    : DEFAULT_SEED_ATTRIBUTES;
+
+  return targets.map((attribute, idx) => pickInstance(attribute, 'daily', input.today, idx));
+}
+
+function threeLowestAttributes(levels: Record<Attribute, number>): Attribute[] {
+  return [...ATTRIBUTES]
+    .map((attribute, originalIndex) => ({
+      attribute,
+      originalIndex,
+      level: levels[attribute],
+    }))
+    .sort((a, b) => a.level - b.level || a.originalIndex - b.originalIndex)
+    .slice(0, 3)
+    .map((x) => x.attribute);
+}
+
+/**
+ * Deterministic template pick: hash the date string and slot index, modulo the
+ * number of available templates for the (attribute, type) combination.
+ */
+function pickInstance(
+  attribute: Attribute,
+  type: MissionType,
+  dateKey: ISODate,
+  slot: number,
+): MissionInstance {
+  const candidates = MISSION_TEMPLATES.filter((t) => t.attribute === attribute && t.type === type);
+  if (candidates.length === 0) {
+    throw new Error(`No ${type} templates for ${attribute}`);
+  }
+  // hashString returns an unsigned 32-bit int (>>> 0), so a single modulo gives a
+  // non-negative index in [0, candidates.length). Non-null assertion is safe.
+  const idx = hashString(`${dateKey}:${slot}`) % candidates.length;
+  const template = candidates[idx]!;
+  return {
+    id: instanceIdFor(template.templateId, dateKey),
+    templateId: template.templateId,
+    description: template.description,
+    attribute: template.attribute,
+    type: template.type,
+    bonusXP: template.bonusXP,
+    generatedFor: dateKey,
+  };
+}
+
+function hashString(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
 }
