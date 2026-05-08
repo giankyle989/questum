@@ -29,3 +29,37 @@ export function characterLevel(levels: Record<Attribute, number>): number {
   const sum = levels.STR + levels.DEX + levels.CON + levels.INT + levels.WIS + levels.CHA;
   return Math.floor(sum / 6);
 }
+
+/**
+ * Multiplies XP by 1.25 when an improvement was detected on the log, otherwise
+ * returns the input unchanged. Returns a float — rounding is the caller's job
+ * (typically via `applyXPMultipliers`).
+ */
+export function applyImprovementBonus(xp: number, improvementDetected: boolean): number {
+  if (!improvementDetected) return xp;
+  return xp * 1.25;
+}
+
+/**
+ * Multiplies XP by the streak multiplier. Returns a float — rounding is the
+ * caller's job (typically via `applyXPMultipliers`).
+ */
+export function applyStreakMultiplier(xp: number, multiplier: number): number {
+  return xp * multiplier;
+}
+
+/**
+ * Canonical XP-multiplier pipeline: applies the improvement bonus and the
+ * streak multiplier, then rounds to integer **once**. Callers building
+ * `requestedGains` for `applyLogXP` should always go through this function so
+ * the rounding strategy matches `GAME_RULES.md`.
+ */
+export function applyXPMultipliers(
+  baseXP: number,
+  improvementDetected: boolean,
+  streakMultiplier: number,
+): number {
+  const afterImprovement = applyImprovementBonus(baseXP, improvementDetected);
+  const afterStreak = applyStreakMultiplier(afterImprovement, streakMultiplier);
+  return Math.round(afterStreak);
+}
