@@ -63,3 +63,24 @@ export function updatePersistedStreak(
   }
   return finalize(1, today);
 }
+
+export interface DisplayedStreakInput {
+  stored: number;
+  lastLogDay: ISODate | null;
+  today: ISODate;
+  pauseWindows: PauseWindow[];
+}
+
+/**
+ * displayedStreak: zero the moment a non-paused gap actually breaks the streak,
+ * even before the next log writes to the DB. Per GAME_RULES §Displayed streak.
+ *
+ * The `today === lastLogDay` "still in window" case from the spec is handled
+ * implicitly: `nonPausedDaysBetween` returns 0 when start === end, which falls
+ * into the `<= 1` branch and returns `stored`. No explicit guard needed.
+ */
+export function displayedStreak(input: DisplayedStreakInput): number {
+  if (input.lastLogDay === null) return 0;
+  const nonPausedGap = nonPausedDaysBetween(input.lastLogDay, input.today, input.pauseWindows);
+  return nonPausedGap <= 1 ? input.stored : 0;
+}

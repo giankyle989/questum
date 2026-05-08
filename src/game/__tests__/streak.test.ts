@@ -1,4 +1,4 @@
-import { getStreakMultiplier, updatePersistedStreak } from '@/game/streak';
+import { displayedStreak, getStreakMultiplier, updatePersistedStreak } from '@/game/streak';
 import type { PauseWindow } from '@/game/calendar';
 
 const NO_PAUSE: PauseWindow[] = [];
@@ -128,5 +128,58 @@ describe('updatePersistedStreak', () => {
         pauseWindows: NO_PAUSE,
       }),
     ).toEqual({ newStreak: 1, newLongestStreak: 7, newLastLogDay: '2026-05-08' });
+  });
+});
+
+describe('displayedStreak', () => {
+  it('returns stored when today equals lastLogDay (already logged today)', () => {
+    expect(
+      displayedStreak({
+        stored: 5,
+        lastLogDay: '2026-05-08',
+        today: '2026-05-08',
+        pauseWindows: NO_PAUSE,
+      }),
+    ).toBe(5);
+  });
+  it('returns stored when last log was yesterday non-paused (still in window)', () => {
+    expect(
+      displayedStreak({
+        stored: 5,
+        lastLogDay: '2026-05-07',
+        today: '2026-05-08',
+        pauseWindows: NO_PAUSE,
+      }),
+    ).toBe(5);
+  });
+  it('returns 0 when there is a non-paused gap of 2+ days', () => {
+    expect(
+      displayedStreak({
+        stored: 5,
+        lastLogDay: '2026-05-06',
+        today: '2026-05-08',
+        pauseWindows: NO_PAUSE,
+      }),
+    ).toBe(0);
+  });
+  it('returns stored when the gap is fully paused', () => {
+    expect(
+      displayedStreak({
+        stored: 5,
+        lastLogDay: '2026-05-01',
+        today: '2026-05-08',
+        pauseWindows: [{ start: '2026-05-02', end: '2026-05-07' }],
+      }),
+    ).toBe(5);
+  });
+  it('returns 0 when lastLogDay is null', () => {
+    expect(
+      displayedStreak({
+        stored: 0,
+        lastLogDay: null,
+        today: '2026-05-08',
+        pauseWindows: NO_PAUSE,
+      }),
+    ).toBe(0);
   });
 });
