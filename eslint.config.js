@@ -14,6 +14,7 @@ module.exports = [
       'ios/**',
       'dist/**',
       'build/**',
+      'coverage/**',
       '*-env.d.ts',
     ],
   },

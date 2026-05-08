@@ -1,5 +1,6 @@
 import { validateLogResult } from '@/game/validation';
 import type { LogResult } from '@/ai/AIService';
+import type { Attribute } from '@/game/constants';
 
 const goodResult = (overrides: Partial<LogResult> = {}): LogResult => ({
   summary: 'Ran 5km',
@@ -70,5 +71,23 @@ describe('validateLogResult', () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toBe('invalid-primary');
+  });
+
+  it('treats missing attributeXP keys as 0 (?? fallback)', () => {
+    // Simulate an AI response missing some attribute keys — they should default to 0.
+    const r = validateLogResult({
+      ...goodResult(),
+      attributeXP: { CON: 50 } as unknown as Record<Attribute, number>,
+      primaryAttribute: 'CON',
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.value.attributeXP.CON).toBe(50);
+      expect(r.value.attributeXP.STR).toBe(0);
+      expect(r.value.attributeXP.DEX).toBe(0);
+      expect(r.value.attributeXP.INT).toBe(0);
+      expect(r.value.attributeXP.WIS).toBe(0);
+      expect(r.value.attributeXP.CHA).toBe(0);
+    }
   });
 });

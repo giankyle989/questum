@@ -11,5 +11,13 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
+  coverageThreshold: {
+    './src/game/': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
+  },
   testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
 };

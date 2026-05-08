@@ -41,6 +41,10 @@ describe('totalXPForLevel', () => {
     expect(totalXPForLevel(4)).toBe(600);
     expect(totalXPForLevel(10)).toBe(4500);
   });
+  it('throws for level < 1', () => {
+    expect(() => totalXPForLevel(0)).toThrow();
+    expect(() => totalXPForLevel(-1)).toThrow();
+  });
 });
 
 describe('characterLevel', () => {
@@ -228,6 +232,18 @@ describe('applyLogXP', () => {
     });
     expect(result.newStates.INT).toEqual({ level: 2, inProgressXp: 10 });
     expect(result.levelUps).toEqual([{ attribute: 'INT', newLevel: 2 }]);
+  });
+
+  it('treats missing alreadyEarnedToday keys as 0 (?? fallback)', () => {
+    // Pass a Partial alreadyEarnedToday that omits some attributes — those should
+    // be treated as 0 earned, leaving full daily-cap headroom.
+    const result = applyLogXP({
+      states: evenStates(1, 0),
+      requestedGains: { STR: 50 },
+      alreadyEarnedToday: {},
+    });
+    expect(result.actuallyApplied.STR).toBe(50);
+    expect(result.newStates.STR).toEqual({ level: 1, inProgressXp: 50 });
   });
 
   it('handles double level-ups across multiple attributes in one log', () => {

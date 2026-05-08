@@ -32,6 +32,9 @@ expo-env.d.ts
 ### EAS
 .eas/
 
+### Test coverage
+coverage/
+
 ### OS / editors
 .DS_Store
 *.pem

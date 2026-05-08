@@ -280,6 +280,16 @@ describe('applyMissionBonus', () => {
     ]);
   });
 
+  it('treats missing bonusByAttribute keys as 0 (?? fallback)', () => {
+    // Pass a partial bonusByAttribute that omits keys — those should be treated as 0.
+    const states = evenStates(2, 25);
+    const result = applyMissionBonus(states, { STR: 50 } as Record<Attribute, number>);
+    expect(result.newStates.STR).toEqual({ level: 2, inProgressXp: 75 });
+    // DEX has no key → defaults to 0 → state unchanged.
+    expect(result.newStates.DEX).toEqual({ level: 2, inProgressXp: 25 });
+    expect(result.levelUps).toEqual([]);
+  });
+
   it('produces double level-ups when bonus stacks high (e.g., daily + weekly on same attribute)', () => {
     // Per GAME_RULES §Per-log ceiling worst case: daily 50 + weekly 150 on same attribute = 200 bonus.
     const states = evenStates(1, 0);
@@ -288,5 +298,32 @@ describe('applyMissionBonus', () => {
     const result = applyMissionBonus(states, bonus);
     // 200 from level 1 with 0 in-progress: → level 2 (carry 100). Threshold 2→3 = 200, 100 < 200, stop.
     expect(result.newStates.STR).toEqual({ level: 2, inProgressXp: 100 });
+  });
+});
+
+describe('pickInstance defensive throw (unreachable in normal flow)', () => {
+  // Exercises the safety branch in pickInstance() when no templates exist for an
+  // (attribute, type) combo. Normal flow guarantees coverage via MISSION_TEMPLATES,
+  // so we synthesize the empty-candidates state by temporarily removing templates.
+  it('throws when no daily templates exist for a target attribute', () => {
+    // Remove all CON daily templates so the seed default ("CON, INT, CHA") triggers the throw.
+    const conDailies = MISSION_TEMPLATES.filter((t) => t.attribute === 'CON' && t.type === 'daily');
+    const removed: MissionTemplate[] = [];
+    for (const t of conDailies) {
+      const idx = MISSION_TEMPLATES.indexOf(t);
+      removed.push(MISSION_TEMPLATES.splice(idx, 1)[0]!);
+    }
+    try {
+      expect(() =>
+        generateDailyMissions({
+          attributeLevels: allLevel1(),
+          today: '2026-05-08',
+          hasEverLogged: false,
+        }),
+      ).toThrow(/No daily templates for CON/);
+    } finally {
+      // Restore so other tests are unaffected.
+      MISSION_TEMPLATES.push(...removed);
+    }
   });
 });
