@@ -1,4 +1,4 @@
-import { DAILY_ATTRIBUTE_XP_CAP, type Attribute } from '@/game/constants';
+import { ATTRIBUTES, DAILY_ATTRIBUTE_XP_CAP, type Attribute } from '@/game/constants';
 
 /**
  * XP needed to reach level `N` from level `N - 1`. `N` is the **target** level.
@@ -110,4 +110,49 @@ export function applyXPGain(state: AttributeStateLike, gain: number): ApplyXPGai
   }
 
   return { state: { level, inProgressXp }, levelUps };
+}
+
+export interface LevelUp {
+  attribute: Attribute;
+  newLevel: number;
+}
+
+export interface ApplyLogXPInput {
+  states: Record<Attribute, AttributeStateLike>;
+  /**
+   * Post-multiplier integer XP per attribute. Missing keys treated as 0.
+   * Callers should produce these via `applyXPMultipliers` so the single-round
+   * rounding strategy is preserved end-to-end.
+   */
+  requestedGains: Partial<Record<Attribute, number>>;
+  /** Today's accumulated XP per attribute. Missing keys treated as 0. */
+  alreadyEarnedToday: Partial<Record<Attribute, number>>;
+}
+
+export interface ApplyLogXPResult {
+  newStates: Record<Attribute, AttributeStateLike>;
+  /** Amount actually deposited per attribute after cap clamp. */
+  actuallyApplied: Record<Attribute, number>;
+  levelUps: LevelUp[];
+}
+
+export function applyLogXP(input: ApplyLogXPInput): ApplyLogXPResult {
+  const newStates = {} as Record<Attribute, AttributeStateLike>;
+  const actuallyApplied = {} as Record<Attribute, number>;
+  const levelUps: LevelUp[] = [];
+
+  for (const attribute of ATTRIBUTES) {
+    const requested = input.requestedGains[attribute] ?? 0;
+    const earned = input.alreadyEarnedToday[attribute] ?? 0;
+    const toApply = clampToDailyCap(requested, earned);
+    const before = input.states[attribute];
+    const { state, levelUps: gained } = applyXPGain(before, toApply);
+    newStates[attribute] = state;
+    actuallyApplied[attribute] = toApply;
+    for (const newLevel of gained) {
+      levelUps.push({ attribute, newLevel });
+    }
+  }
+
+  return { newStates, actuallyApplied, levelUps };
 }

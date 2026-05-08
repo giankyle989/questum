@@ -7,9 +7,11 @@ import {
   applyXPMultipliers,
   clampToDailyCap,
   applyXPGain,
+  applyLogXP,
   type AttributeStateLike,
 } from '@/game/xp';
-import { DAILY_ATTRIBUTE_XP_CAP } from '@/game/constants';
+import { ATTRIBUTES, DAILY_ATTRIBUTE_XP_CAP } from '@/game/constants';
+import type { Attribute } from '@/game/constants';
 
 describe('xpToReachLevel', () => {
   it('returns 100 for level 2 (i.e., 1→2 takes 100 XP)', () => {
@@ -167,5 +169,83 @@ describe('applyXPGain', () => {
 
   it('throws on negative gain (undefined behavior in spec)', () => {
     expect(() => applyXPGain(initial(1, 0), -5)).toThrow();
+  });
+});
+
+const evenStates = (level: number, inProgressXp: number) =>
+  ATTRIBUTES.reduce(
+    (acc, a) => {
+      acc[a] = { level, inProgressXp };
+      return acc;
+    },
+    {} as Record<Attribute, AttributeStateLike>,
+  );
+
+const zeroEarned = (): Record<Attribute, number> =>
+  ATTRIBUTES.reduce(
+    (acc, a) => {
+      acc[a] = 0;
+      return acc;
+    },
+    {} as Record<Attribute, number>,
+  );
+
+describe('applyLogXP', () => {
+  it('applies XP only to attributes that received gain (others unchanged)', () => {
+    const result = applyLogXP({
+      states: evenStates(1, 0),
+      requestedGains: { STR: 50, DEX: 30 },
+      alreadyEarnedToday: zeroEarned(),
+    });
+    expect(result.newStates.STR).toEqual({ level: 1, inProgressXp: 50 });
+    expect(result.newStates.DEX).toEqual({ level: 1, inProgressXp: 30 });
+    expect(result.newStates.CON).toEqual({ level: 1, inProgressXp: 0 });
+    expect(result.actuallyApplied.STR).toBe(50);
+    expect(result.actuallyApplied.DEX).toBe(30);
+    expect(result.actuallyApplied.CON).toBe(0);
+    expect(result.levelUps).toEqual([]);
+  });
+
+  it('clamps to per-attribute daily cap and reports actually-applied accurately', () => {
+    const earned = zeroEarned();
+    earned.STR = 180;
+    const result = applyLogXP({
+      states: evenStates(1, 0),
+      requestedGains: { STR: 50 },
+      alreadyEarnedToday: earned,
+    });
+    // headroom is 20, so only 20 lands
+    expect(result.newStates.STR.inProgressXp).toBe(20);
+    expect(result.actuallyApplied.STR).toBe(20);
+  });
+
+  it('reports level-ups with attribute names', () => {
+    const states = evenStates(1, 80);
+    const result = applyLogXP({
+      states,
+      requestedGains: { INT: 30 },
+      alreadyEarnedToday: zeroEarned(),
+    });
+    expect(result.newStates.INT).toEqual({ level: 2, inProgressXp: 10 });
+    expect(result.levelUps).toEqual([{ attribute: 'INT', newLevel: 2 }]);
+  });
+
+  it('handles double level-ups across multiple attributes in one log', () => {
+    // STR pre-loaded with 150 in-progress so a 200 (cap-respecting) gain crosses
+    // both 1→2 (100) and 2→3 (200) thresholds; INT crosses one threshold.
+    const states = evenStates(1, 0);
+    states.STR = { level: 1, inProgressXp: 150 };
+    const result = applyLogXP({
+      states,
+      requestedGains: { STR: 200, INT: 150 },
+      alreadyEarnedToday: zeroEarned(),
+    });
+    expect(result.newStates.STR).toEqual({ level: 3, inProgressXp: 50 });
+    expect(result.newStates.INT).toEqual({ level: 2, inProgressXp: 50 });
+    expect(result.levelUps).toEqual([
+      { attribute: 'STR', newLevel: 2 },
+      { attribute: 'STR', newLevel: 3 },
+      { attribute: 'INT', newLevel: 2 },
+    ]);
   });
 });
