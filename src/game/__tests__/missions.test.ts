@@ -1,4 +1,4 @@
-import { MISSION_TEMPLATES, type MissionTemplate } from '@/game/missions';
+import { MISSION_TEMPLATES, instanceIdFor, type MissionTemplate } from '@/game/missions';
 import { ATTRIBUTES } from '@/game/constants';
 
 describe('MISSION_TEMPLATES', () => {
@@ -30,5 +30,11 @@ describe('MISSION_TEMPLATES', () => {
       if (t.type === 'daily') expect(t.bonusXP).toBe(50);
       if (t.type === 'weekly') expect(t.bonusXP).toBe(150);
     }
+  });
+});
+
+describe('instanceIdFor', () => {
+  it('joins templateId and ISO date with underscore', () => {
+    expect(instanceIdFor('daily_con_cardio', '2026-05-08')).toBe('daily_con_cardio_2026-05-08');
   });
 });

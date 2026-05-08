@@ -1,3 +1,4 @@
+import type { ISODate } from '@/game/calendar';
 import type { Attribute } from '@/game/constants';
 
 export type MissionType = 'daily' | 'weekly';
@@ -141,3 +142,20 @@ export const MISSION_TEMPLATES: MissionTemplate[] = [
     bonusXP: 150,
   },
 ];
+
+export interface MissionInstance {
+  /** `<templateId>_<dateOrWeekStart>`. Stable across reads. */
+  id: string;
+  templateId: string;
+  description: string;
+  attribute: Attribute;
+  type: MissionType;
+  bonusXP: number;
+  /** ISO date for daily; ISO date of the Monday for weekly. */
+  generatedFor: ISODate;
+}
+
+/** Build the unique instance id used in storage and AI input. */
+export function instanceIdFor(templateId: string, dateKey: ISODate): string {
+  return `${templateId}_${dateKey}`;
+}
