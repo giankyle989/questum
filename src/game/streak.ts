@@ -1,14 +1,15 @@
 import { nonPausedDaysBetween, type ISODate, type PauseWindow } from '@/game/calendar';
+import { BASE_STREAK_MULTIPLIER, STREAK_MULTIPLIER_TIERS } from '@/game/constants';
 
 /**
  * Streak multiplier table per GAME_RULES §Streak multiplier.
  * Streak length is "consecutive days with at least one log."
  */
 export function getStreakMultiplier(streakDays: number): number {
-  if (streakDays >= 7) return 1.2;
-  if (streakDays >= 5) return 1.1;
-  if (streakDays >= 3) return 1.05;
-  return 1.0;
+  for (const tier of STREAK_MULTIPLIER_TIERS) {
+    if (streakDays >= tier.minDays) return tier.multiplier;
+  }
+  return BASE_STREAK_MULTIPLIER;
 }
 
 export interface UpdatePersistedStreakInput {

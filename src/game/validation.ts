@@ -1,8 +1,11 @@
-import { ATTRIBUTES, MAX_LOG_TOTAL_XP, MAX_LOG_ATTRIBUTE_XP } from '@/game/constants';
+import {
+  ATTRIBUTES,
+  LOW_CONFIDENCE_THRESHOLD,
+  MAX_LOG_ATTRIBUTE_XP,
+  MAX_LOG_TOTAL_XP,
+} from '@/game/constants';
 import type { Attribute } from '@/game/constants';
 import type { LogResult } from '@/ai/AIService';
-
-const LOW_CONFIDENCE_THRESHOLD = 0.3;
 
 export type ValidationResult =
   | { ok: true; value: LogResult }

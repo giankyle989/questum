@@ -1,6 +1,5 @@
+import { DECAY_GRACE_DAYS, DECAY_PER_DAY_RETENTION } from '@/game/constants';
 import type { AttributeStateLike } from '@/game/xp';
-
-const PER_DAY_RETENTION = 0.99;
 
 /**
  * Per GAME_RULES §Grace period:
@@ -11,7 +10,7 @@ export function effectiveInactiveDays(
   daysSinceLastLog: number,
   pausedDaysInWindow: number,
 ): number {
-  return Math.max(0, daysSinceLastLog - 2 - pausedDaysInWindow);
+  return Math.max(0, daysSinceLastLog - DECAY_GRACE_DAYS - pausedDaysInWindow);
 }
 
 /**
@@ -23,7 +22,7 @@ export function applyDecay(state: AttributeStateLike, effectiveDays: number): At
     throw new Error(`applyDecay: effectiveDays must be >= 0 (got ${effectiveDays})`);
   }
   if (effectiveDays === 0) return { ...state };
-  const multiplier = Math.pow(PER_DAY_RETENTION, effectiveDays);
+  const multiplier = Math.pow(DECAY_PER_DAY_RETENTION, effectiveDays);
   const decayed = Math.floor(state.inProgressXp * multiplier);
   return {
     level: state.level,

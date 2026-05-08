@@ -335,7 +335,7 @@ export interface ApplyMissionBonusResult {
  */
 export function applyMissionBonus(
   states: Record<Attribute, AttributeStateLike>,
-  bonusByAttribute: Record<Attribute, number>,
+  bonusByAttribute: Partial<Record<Attribute, number>>,
 ): ApplyMissionBonusResult {
   const newStates = {} as Record<Attribute, AttributeStateLike>;
   const levelUps: LevelUp[] = [];

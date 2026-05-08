@@ -1,4 +1,9 @@
-import { ATTRIBUTES, DAILY_ATTRIBUTE_XP_CAP, type Attribute } from '@/game/constants';
+import {
+  ATTRIBUTES,
+  DAILY_ATTRIBUTE_XP_CAP,
+  IMPROVEMENT_BONUS_MULTIPLIER,
+  type Attribute,
+} from '@/game/constants';
 
 /**
  * XP needed to reach level `N` from level `N - 1`. `N` is the **target** level.
@@ -37,7 +42,7 @@ export function characterLevel(levels: Record<Attribute, number>): number {
  */
 export function applyImprovementBonus(xp: number, improvementDetected: boolean): number {
   if (!improvementDetected) return xp;
-  return xp * 1.25;
+  return xp * IMPROVEMENT_BONUS_MULTIPLIER;
 }
 
 /**
