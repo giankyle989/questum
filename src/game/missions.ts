@@ -267,3 +267,57 @@ function lowestAttribute(levels: Record<Attribute, number>): Attribute {
   }
   return best;
 }
+
+export interface ValidateMatchedMissionsInput {
+  matchedIds: string[];
+  activeMissions: MissionInstance[];
+  completedIds: Set<string>;
+}
+
+export interface ValidateMatchedMissionsResult {
+  /** Mission instance ids that should be marked completed. */
+  completedIds: string[];
+  /** Bonus XP per attribute, summed across newly-completed missions. */
+  bonusByAttribute: Record<Attribute, number>;
+  /** Ids the AI returned that aren't in the active list. */
+  unknownIds: string[];
+  /** Ids the AI returned that are already completed. */
+  alreadyCompleted: string[];
+}
+
+export function validateMatchedMissions(
+  input: ValidateMatchedMissionsInput,
+): ValidateMatchedMissionsResult {
+  const byId = new Map(input.activeMissions.map((m) => [m.id, m] as const));
+  const completed: string[] = [];
+  const unknown: string[] = [];
+  const already: string[] = [];
+  const bonus = ATTRIBUTES.reduce(
+    (acc, a) => {
+      acc[a] = 0;
+      return acc;
+    },
+    {} as Record<Attribute, number>,
+  );
+
+  for (const id of input.matchedIds) {
+    const mission = byId.get(id);
+    if (!mission) {
+      unknown.push(id);
+      continue;
+    }
+    if (input.completedIds.has(id)) {
+      already.push(id);
+      continue;
+    }
+    completed.push(id);
+    bonus[mission.attribute] += mission.bonusXP;
+  }
+
+  return {
+    completedIds: completed,
+    bonusByAttribute: bonus,
+    unknownIds: unknown,
+    alreadyCompleted: already,
+  };
+}

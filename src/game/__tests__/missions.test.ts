@@ -4,7 +4,9 @@ import {
   generateDailyMissions,
   generateWeeklyQuest,
   mondayOf,
+  validateMatchedMissions,
   type MissionTemplate,
+  type MissionInstance,
 } from '@/game/missions';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
 
@@ -158,5 +160,68 @@ describe('generateWeeklyQuest', () => {
       today: '2026-05-08',
     });
     expect(a[0]!.id).toBe(b[0]!.id);
+  });
+});
+
+const dailyInst = (id: string, attribute: Attribute, bonusXP: number): MissionInstance => ({
+  id,
+  templateId: id,
+  description: id,
+  attribute,
+  type: 'daily',
+  bonusXP,
+  generatedFor: '2026-05-08',
+});
+
+describe('validateMatchedMissions', () => {
+  it('returns valid ids and summed bonus XP grouped by attribute', () => {
+    const active: MissionInstance[] = [
+      dailyInst('m1', 'STR', 50),
+      dailyInst('m2', 'CON', 50),
+      dailyInst('m3', 'INT', 50),
+    ];
+    const result = validateMatchedMissions({
+      matchedIds: ['m1', 'm3'],
+      activeMissions: active,
+      completedIds: new Set(),
+    });
+    expect(result.completedIds).toEqual(['m1', 'm3']);
+    expect(result.bonusByAttribute).toEqual({ STR: 50, CON: 0, DEX: 0, INT: 50, WIS: 0, CHA: 0 });
+  });
+
+  it('drops unknown ids silently', () => {
+    const active: MissionInstance[] = [dailyInst('m1', 'STR', 50)];
+    const result = validateMatchedMissions({
+      matchedIds: ['m1', 'unknown'],
+      activeMissions: active,
+      completedIds: new Set(),
+    });
+    expect(result.completedIds).toEqual(['m1']);
+    expect(result.unknownIds).toEqual(['unknown']);
+  });
+
+  it('drops already-completed ids', () => {
+    const active: MissionInstance[] = [dailyInst('m1', 'STR', 50)];
+    const result = validateMatchedMissions({
+      matchedIds: ['m1'],
+      activeMissions: active,
+      completedIds: new Set(['m1']),
+    });
+    expect(result.completedIds).toEqual([]);
+    expect(result.alreadyCompleted).toEqual(['m1']);
+    expect(result.bonusByAttribute.STR).toBe(0);
+  });
+
+  it('sums bonuses when multiple matched missions target the same attribute', () => {
+    const active: MissionInstance[] = [
+      dailyInst('m1', 'STR', 50),
+      { ...dailyInst('w1', 'STR', 150), type: 'weekly' },
+    ];
+    const result = validateMatchedMissions({
+      matchedIds: ['m1', 'w1'],
+      activeMissions: active,
+      completedIds: new Set(),
+    });
+    expect(result.bonusByAttribute.STR).toBe(200);
   });
 });
