@@ -18,22 +18,25 @@ export const ATTRIBUTES: Attribute[] = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'
 
 ### Level threshold formula
 
+`xpToReachLevel(N)` returns the XP required to reach level N from level N-1 (i.e., `N` is the **target** level being reached).
+
 ```
-xpToReachLevel(N) = 100 * N
+xpToReachLevel(N) = 100 * (N - 1)
 ```
 
 That is:
 
-- Level 1 → 2 needs 100 XP
-- Level 2 → 3 needs 200 XP
-- Level 10 → 11 needs 1000 XP
+- Level 1 → 2 needs `xpToReachLevel(2) = 100` XP
+- Level 2 → 3 needs `xpToReachLevel(3) = 200` XP
+- Level 10 → 11 needs `xpToReachLevel(11) = 1000` XP
 
 Total cumulative XP to reach level N from level 1:
 
 ```
-totalXPForLevel(N) = sum from i=1 to N-1 of (100 * i)
-                  = 100 * (N-1) * N / 2
-                  = 50 * N * (N-1)
+totalXPForLevel(N) = sum from i=2 to N of xpToReachLevel(i)
+                  = sum from i=2 to N of 100 * (i - 1)
+                  = 100 * (N - 1) * N / 2
+                  = 50 * N * (N - 1)
 ```
 
 ### Attribute level
