@@ -5,7 +5,9 @@ import {
   applyImprovementBonus,
   applyStreakMultiplier,
   applyXPMultipliers,
+  clampToDailyCap,
 } from '@/game/xp';
+import { DAILY_ATTRIBUTE_XP_CAP } from '@/game/constants';
 
 describe('xpToReachLevel', () => {
   it('returns 100 for level 2 (i.e., 1→2 takes 100 XP)', () => {
@@ -90,5 +92,25 @@ describe('applyXPMultipliers', () => {
   });
   it('returns 0 for a 0 base regardless of multipliers', () => {
     expect(applyXPMultipliers(0, true, 1.2)).toBe(0);
+  });
+});
+
+describe('clampToDailyCap', () => {
+  it('returns the requested amount when there is full headroom', () => {
+    expect(clampToDailyCap(50, 0)).toBe(50);
+  });
+  it('returns the cap minus already-earned when partial headroom', () => {
+    expect(clampToDailyCap(80, 150)).toBe(50); // headroom = 200 - 150 = 50
+  });
+  it('returns 0 when the cap is already met', () => {
+    expect(clampToDailyCap(50, DAILY_ATTRIBUTE_XP_CAP)).toBe(0);
+    expect(clampToDailyCap(50, DAILY_ATTRIBUTE_XP_CAP + 100)).toBe(0);
+  });
+  it('never returns more than the requested amount', () => {
+    // headroom huge, but we only asked for 30
+    expect(clampToDailyCap(30, 0)).toBe(30);
+  });
+  it('treats already-earned of 0 as full headroom', () => {
+    expect(clampToDailyCap(200, 0)).toBe(200);
   });
 });

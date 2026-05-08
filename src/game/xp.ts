@@ -1,4 +1,4 @@
-import type { Attribute } from '@/game/constants';
+import { DAILY_ATTRIBUTE_XP_CAP, type Attribute } from '@/game/constants';
 
 /**
  * XP needed to reach level `N` from level `N - 1`. `N` is the **target** level.
@@ -62,4 +62,13 @@ export function applyXPMultipliers(
   const afterImprovement = applyImprovementBonus(baseXP, improvementDetected);
   const afterStreak = applyStreakMultiplier(afterImprovement, streakMultiplier);
   return Math.round(afterStreak);
+}
+
+/**
+ * Returns the amount of XP that can actually land on an attribute given today's
+ * accumulated XP for that attribute. Excess is silently dropped per GAME_RULES.
+ */
+export function clampToDailyCap(requested: number, alreadyEarnedToday: number): number {
+  const headroom = Math.max(0, DAILY_ATTRIBUTE_XP_CAP - alreadyEarnedToday);
+  return Math.min(requested, headroom);
 }
