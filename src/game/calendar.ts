@@ -36,3 +36,72 @@ function parseParts(d: ISODate): [number, number, number] {
   const [yStr, mStr, dStr] = d.split('-');
   return [Number(yStr), Number(mStr) - 1, Number(dStr)];
 }
+
+export interface PauseWindow {
+  start: ISODate;
+  /** null means "still paused; window extends to the calculation end date". */
+  end: ISODate | null;
+}
+
+/**
+ * Count of calendar days from `start` (exclusive) to `end` (inclusive) minus
+ * any days falling inside any pause window. Pause windows are clipped to
+ * `(start, end]` — a pause day on `start` itself does not count, because the
+ * function counts non-paused days *between* start and end (the spec's
+ * "exclusive of both" semantics in `GAME_RULES.md`). Overlapping windows are
+ * merged. Returns 0 if `end` precedes `start`.
+ */
+export function nonPausedDaysBetween(start: ISODate, end: ISODate, windows: PauseWindow[]): number {
+  const total = daysBetween(start, end);
+  if (total <= 0) return 0;
+
+  // Clip pause windows to (start, end] by shifting the lower bound forward 1 day.
+  // mergeWindows clips to [clipFrom, end] internally and filters degenerate windows,
+  // so each `merged` entry already has start >= clipFrom and end <= `end`.
+  const clipFrom = addDays(start, 1);
+  const merged = mergeWindows(windows, clipFrom, end);
+  let pausedDayCount = 0;
+  for (const window of merged) {
+    pausedDayCount += daysBetween(window.start, window.end) + 1;
+  }
+
+  return Math.max(0, total - pausedDayCount);
+}
+
+function mergeWindows(
+  windows: PauseWindow[],
+  rangeStart: ISODate,
+  rangeEnd: ISODate,
+): { start: ISODate; end: ISODate }[] {
+  const normalized = windows
+    .map((w) => ({
+      start: laterDate(w.start, rangeStart),
+      end: earlierDate(w.end ?? rangeEnd, rangeEnd),
+    }))
+    // Drop windows that don't overlap [rangeStart, rangeEnd] at all.
+    .filter((w) => daysBetween(w.start, w.end) >= 0)
+    // Sort ascending by start date: daysBetween(b.start, a.start) is `a - b` in days,
+    // negative when a is earlier, which puts a before b.
+    .sort((a, b) => daysBetween(b.start, a.start));
+
+  const out: { start: ISODate; end: ISODate }[] = [];
+  for (const window of normalized) {
+    const last = out[out.length - 1];
+    // Merge adjacent windows: 0 days apart (overlap) OR exactly 1 day apart
+    // (back-to-back on calendar) are treated as one continuous pause.
+    if (last && daysBetween(last.end, window.start) <= 1) {
+      last.end = laterDate(last.end, window.end);
+    } else {
+      out.push({ ...window });
+    }
+  }
+  return out;
+}
+
+function laterDate(a: ISODate, b: ISODate): ISODate {
+  return daysBetween(a, b) >= 0 ? b : a;
+}
+
+function earlierDate(a: ISODate, b: ISODate): ISODate {
+  return daysBetween(a, b) <= 0 ? b : a;
+}
