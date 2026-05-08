@@ -57,6 +57,24 @@ When making changes:
 6. **Ask before architectural changes.** New libraries, new state stores, new navigation patterns — flag and confirm before adding.
 7. **Default to small, reviewable diffs.** A working `LogEntryScreen` in three commits beats a 600-line monolith in one.
 
+## Subagent usage (always consider before acting)
+
+Before responding to any non-trivial task, **stop and check whether a specialist agent in `.claude/agents/` should handle it**. Don't default to doing everything yourself in the main thread — these agents exist to keep the main context focused and produce higher-quality work in their domain. The available agents are: `orchestrator`, `frontend`, `backend`, `database`, `devops`, `tester`, `debugger`, `refactorer`, `docs-writer`, `security-reviewer`, `performance-reviewer`, `plan-thinker`, `plan-writer`, `plan-reviewer`.
+
+**Default to `orchestrator` for anything multi-step or cross-cutting.** If a request touches more than one domain (e.g. game engine + UI, schema + backend, code + tests, feature + docs), or implies coordination ("build X end to end", "ship this", "wire up Y"), invoke the `orchestrator` agent rather than juggling subagents yourself. The orchestrator decomposes the work, dispatches specialists in parallel where possible, and synthesizes results.
+
+**Direct-to-specialist is fine for clearly single-domain tasks**, e.g.:
+- A failing test or unexplained bug → `debugger`
+- A new SQLite migration or schema change → `database`
+- A focused UI tweak with no backend impact → `frontend`
+- Game engine changes (pure logic + Jest) → `tester` after implementation, or `plan-thinker` if approach is unclear
+- Pre-merge security or performance audit → `security-reviewer` / `performance-reviewer` (use proactively after meaningful changes)
+- Open-ended planning before code → `plan-thinker` → `plan-writer` → `plan-reviewer`
+
+**When in doubt, prefer `orchestrator` over going solo.** The cost of delegating is low; the cost of a sprawling main-thread implementation that mixes concerns is high. Only skip subagents for trivial edits (one-line fixes, doc tweaks, single-file renames) or pure Q&A about the codebase.
+
+User-scoped agents in `~/.claude/agents/` take precedence over project-scoped ones with the same name (per global instructions), but the project copies here serve as the documented baseline.
+
 ## Tech stack (locked)
 
 - **Framework:** Expo SDK (managed workflow), TypeScript
