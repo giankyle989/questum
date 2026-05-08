@@ -912,10 +912,15 @@ describe('applyLogXP', () => {
   });
 
   it('handles double level-ups across multiple attributes in one log', () => {
-    const states = evenStates(1, 0);
+    // Pre-load STR with 150 in-progress XP so a 200-XP request (within the daily
+    // cap) lands a true 1→2→3 double level-up. INT starts fresh and crosses one
+    // threshold. A naive `STR: 350` request would be clamped to 200 by
+    // clampToDailyCap and yield only a single level-up — exercising both the cap
+    // AND the double-up requires this pre-load.
+    const states = { ...evenStates(1, 0), STR: { level: 1, inProgressXp: 150 } };
     const result = applyLogXP({
       states,
-      requestedGains: { STR: 350, INT: 150 },
+      requestedGains: { STR: 200, INT: 150 },
       alreadyEarnedToday: zeroEarned(),
     });
     expect(result.newStates.STR).toEqual({ level: 3, inProgressXp: 50 });
