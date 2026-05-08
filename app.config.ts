@@ -20,11 +20,11 @@ const config: ExpoConfig = {
   slug: 'questum',
   version: '0.1.0',
   orientation: 'portrait',
-  icon: './assets/images/icon.png',
+  icon: './assets/images/questum-icon.png',
   scheme: 'questum',
   userInterfaceStyle: 'dark',
   splash: {
-    image: './assets/images/splash-icon.png',
+    image: './assets/images/questum-splash.png',
     resizeMode: 'contain',
     backgroundColor: '#0E1116',
   },
