@@ -1,7 +1,7 @@
 import type { DbDriver } from './db';
+import type { Migration } from './migrations';
 
-export type { Migration } from './migrations/index';
-import type { Migration } from './migrations/index';
+export type { Migration };
 
 const SCHEMA_VERSION_DDL = `
 CREATE TABLE IF NOT EXISTS schema_version (

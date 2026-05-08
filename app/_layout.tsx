@@ -9,8 +9,8 @@ import {
 } from '@expo-google-fonts/manrope';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { applyMigrations } from '@/storage/migrations';
-import { MIGRATIONS } from '@/storage/migrations/index';
+import { applyMigrations } from '@/storage/migrationRunner';
+import { MIGRATIONS } from '@/storage/migrations';
 import { getDb } from '@/storage/db';
 import { logger } from '@/lib/logger';
 import '../global.css';

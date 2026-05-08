@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
-import { applyMigrations, type Migration } from './migrations';
+import { applyMigrations } from './migrationRunner';
+import type { Migration } from './migrations';
 import { createNodeSqliteDriver } from './testHelpers';
 
 describe('applyMigrations', () => {

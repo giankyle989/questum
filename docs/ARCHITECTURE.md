@@ -77,7 +77,8 @@ These rules are non-negotiable. Violating them will cause technical debt that co
 2. **`ai/` depends on nothing else in the app at runtime.** Returns parsed JSON via the AIService interface. Cannot import runtime values from `game/`, `storage/`, `ui/`, or `state/`.
 3. **`storage/` depends on nothing else.** Repositories return plain data; they don't apply game rules.
 4. **`state/` depends on `storage/` and `game/`.** Stores call repositories and apply game functions.
-5. **`ui/` depends on `state/`.** Screens and components read from stores and call store actions. UI never imports from `game/`, `storage/`, or `ai/` directly.
+5. **`ui/` depends on `state/`.** Screens and components read from stores and call store actions. UI never imports runtime values from `storage/` or `ai/` directly.
+   - **Design-tokens exception:** `ui/` may import the design-system constants (`COLORS`, `ATTRIBUTE_COLORS`) from `@/game/constants`. These are pure values shared between game logic and visual theming and have no behavior — see the visual design system spec for why they live in `game/`. No other `game/` imports from `ui/` are permitted.
 6. **`notifications/` depends on `state/`.** Reads schedule data from settings store.
 
 ### Type-only import exception
@@ -86,6 +87,8 @@ Rules 1 and 2 are about **runtime** dependencies. Type-only imports (`import typ
 
 - `game/validation.ts` may `import type { LogResult } from '@/ai/AIService'` to clamp the AI's output.
 - `ai/schema.ts` may `import type { Attribute } from '@/game/constants'` to keep the Zod enum aligned with the canonical attribute list.
+- Repository skeletons in `storage/repositories/` may `import type { Attribute } from '@/game/constants'` for typed signatures.
+- State stores in `state/` may type-import repo types and `Attribute`.
 
 Any non-type import between these layers is a violation. Lint rule (Phase 1): `@typescript-eslint/consistent-type-imports` enforces explicit `import type` syntax so violations are visible in code review.
 
