@@ -6,6 +6,8 @@ import {
   applyStreakMultiplier,
   applyXPMultipliers,
   clampToDailyCap,
+  applyXPGain,
+  type AttributeStateLike,
 } from '@/game/xp';
 import { DAILY_ATTRIBUTE_XP_CAP } from '@/game/constants';
 
@@ -112,5 +114,58 @@ describe('clampToDailyCap', () => {
   });
   it('treats already-earned of 0 as full headroom', () => {
     expect(clampToDailyCap(200, 0)).toBe(200);
+  });
+});
+
+const initial = (level: number, inProgressXp: number): AttributeStateLike => ({
+  level,
+  inProgressXp,
+});
+
+describe('applyXPGain', () => {
+  it('adds XP without leveling up when below the threshold', () => {
+    const result = applyXPGain(initial(1, 30), 50);
+    expect(result.state).toEqual({ level: 1, inProgressXp: 80 });
+    expect(result.levelUps).toEqual([]);
+  });
+
+  it('levels up exactly when XP equals the threshold (carries 0)', () => {
+    const result = applyXPGain(initial(1, 0), 100);
+    expect(result.state).toEqual({ level: 2, inProgressXp: 0 });
+    expect(result.levelUps).toEqual([2]);
+  });
+
+  it('levels up and carries overflow to the new in-progress XP', () => {
+    const result = applyXPGain(initial(1, 60), 80); // 60 + 80 = 140; over 100, carry 40 at level 2
+    expect(result.state).toEqual({ level: 2, inProgressXp: 40 });
+    expect(result.levelUps).toEqual([2]);
+  });
+
+  it('handles multi-level gains in one application (1 → 3)', () => {
+    // Threshold to reach 2 = 100; threshold to reach 3 = 200. From level 1 with 0 in-progress,
+    // 250 XP → level 2 (100), level 3 (200), carry 50 at level 3.
+    // Wait: from level 1, gaining 250 means: 100 → level 2 (carry 150). At level 2,
+    // threshold to reach 3 is 200. 150 < 200, so stay at level 2 with 150 in-progress.
+    const result = applyXPGain(initial(1, 0), 250);
+    expect(result.state).toEqual({ level: 2, inProgressXp: 150 });
+    expect(result.levelUps).toEqual([2]);
+  });
+
+  it('handles a true double level-up when carry exceeds next threshold', () => {
+    // From level 1 with 0 in-progress, gain 350. 100 → level 2 (carry 250 at level 2).
+    // Threshold 2→3 is 200. 250 - 200 = 50, level 3 with 50 in-progress.
+    const result = applyXPGain(initial(1, 0), 350);
+    expect(result.state).toEqual({ level: 3, inProgressXp: 50 });
+    expect(result.levelUps).toEqual([2, 3]);
+  });
+
+  it('returns identity for a zero gain', () => {
+    const result = applyXPGain(initial(5, 42), 0);
+    expect(result.state).toEqual({ level: 5, inProgressXp: 42 });
+    expect(result.levelUps).toEqual([]);
+  });
+
+  it('throws on negative gain (undefined behavior in spec)', () => {
+    expect(() => applyXPGain(initial(1, 0), -5)).toThrow();
   });
 });

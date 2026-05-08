@@ -72,3 +72,42 @@ export function clampToDailyCap(requested: number, alreadyEarnedToday: number): 
   const headroom = Math.max(0, DAILY_ATTRIBUTE_XP_CAP - alreadyEarnedToday);
   return Math.min(requested, headroom);
 }
+
+/**
+ * Subset of AttributeState that the XP gain function actually mutates. Kept
+ * narrow so tests don't need to construct the full AttributeState
+ * (which carries the attribute name).
+ */
+export interface AttributeStateLike {
+  level: number;
+  inProgressXp: number;
+}
+
+export interface ApplyXPGainResult {
+  state: AttributeStateLike;
+  /** Levels reached during this gain, in order (e.g. [2, 3] for a double). */
+  levelUps: number[];
+}
+
+/**
+ * Adds `gain` XP to a single attribute state, walking through any level
+ * thresholds it crosses. Pure: returns a new state object.
+ */
+export function applyXPGain(state: AttributeStateLike, gain: number): ApplyXPGainResult {
+  if (gain < 0) {
+    throw new Error(`applyXPGain: gain must be non-negative (got ${gain})`);
+  }
+  let level = state.level;
+  let inProgressXp = state.inProgressXp + gain;
+  const levelUps: number[] = [];
+
+  while (true) {
+    const threshold = xpToReachLevel(level + 1);
+    if (inProgressXp < threshold) break;
+    inProgressXp -= threshold;
+    level += 1;
+    levelUps.push(level);
+  }
+
+  return { state: { level, inProgressXp }, levelUps };
+}
