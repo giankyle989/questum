@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="256" height="256" role="img" aria-label="Questum app icon">
+  <title>Questum app icon</title>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@800&amp;display=swap');
+      .qm-q {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 451px;
+        fill: #0E1116;
+      }
+    </style>
+  </defs>
+
+  <!-- Full-bleed deep navy background. iOS adds the squircle mask. -->
+  <rect width="1024" height="1024" fill="#0E1116"/>
+
+  <!-- Gold hex (pointy-top), centered, leaves comfortable padding for the iOS mask -->
+  <polygon points="512,164 819,328 819,696 512,860 205,696 205,328"
+           fill="#E8C547"/>
+
+  <!-- "Q" cutout in dark navy — geometric center -->
+  <text x="512" y="656" text-anchor="middle" class="qm-q">Q</text>
+</svg>

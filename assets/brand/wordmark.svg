@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="600" height="200" role="img" aria-label="Questum — Level up real life">
+  <title>Questum wordmark</title>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&amp;display=swap');
+      .qm-display {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-weight: 800;
+        font-size: 96px;
+        letter-spacing: 10px;
+        fill: #E6EDF3;
+      }
+      .qm-kicker {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 18px;
+        letter-spacing: 3.6px;
+        fill: #E8C547;
+      }
+    </style>
+  </defs>
+
+  <!-- Display: QUESTUM -->
+  <text x="300" y="110" text-anchor="middle" class="qm-display">QUESTUM</text>
+
+  <!-- Kicker: LEVEL UP REAL LIFE -->
+  <text x="300" y="148" text-anchor="middle" class="qm-kicker">LEVEL UP REAL LIFE</text>
+</svg>
