@@ -1,4 +1,4 @@
-import type { ISODate } from '@/game/calendar';
+import { addDays, type ISODate } from '@/game/calendar';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
 
 export type MissionType = 'daily' | 'weekly';
@@ -225,4 +225,45 @@ function hashString(s: string): number {
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;
+}
+
+/** Returns the ISO date of the Monday on or before the given date. */
+export function mondayOf(date: ISODate): ISODate {
+  // Reconstruct as a UTC date to avoid local TZ drift; weekday math then matches.
+  const [yStr, mStr, dStr] = date.split('-');
+  const utc = new Date(Date.UTC(Number(yStr), Number(mStr) - 1, Number(dStr)));
+  // getUTCDay: 0=Sunday, 1=Monday, ..., 6=Saturday. Step back to Monday (0 → -6, 1 → 0, ..., 6 → -5).
+  const day = utc.getUTCDay();
+  const offset = day === 0 ? -6 : 1 - day;
+  return addDays(date, offset);
+}
+
+export interface GenerateWeeklyQuestInput {
+  attributeLevels: Record<Attribute, number>;
+  today: ISODate;
+}
+
+export function generateWeeklyQuest(input: GenerateWeeklyQuestInput): MissionInstance[] {
+  const monday = mondayOf(input.today);
+  const target = lowestAttribute(input.attributeLevels);
+  return [pickInstance(target, 'weekly', monday, 0)];
+}
+
+/**
+ * Returns the lowest-level attribute. Ties are broken by `ATTRIBUTES` order:
+ * the strict `<` comparison preserves the first occurrence the loop sees,
+ * which is the earliest in `ATTRIBUTES` order.
+ */
+function lowestAttribute(levels: Record<Attribute, number>): Attribute {
+  let best: Attribute = ATTRIBUTES[0]!;
+  let bestLevel = levels[best];
+  for (let i = 1; i < ATTRIBUTES.length; i++) {
+    const a = ATTRIBUTES[i]!;
+    const lvl = levels[a];
+    if (lvl < bestLevel) {
+      best = a;
+      bestLevel = lvl;
+    }
+  }
+  return best;
 }

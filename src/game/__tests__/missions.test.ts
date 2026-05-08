@@ -2,6 +2,8 @@ import {
   MISSION_TEMPLATES,
   instanceIdFor,
   generateDailyMissions,
+  generateWeeklyQuest,
+  mondayOf,
   type MissionTemplate,
 } from '@/game/missions';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
@@ -109,5 +111,52 @@ describe('generateDailyMissions', () => {
       expect(m.generatedFor).toBe('2026-05-08');
       expect(m.type).toBe('daily');
     }
+  });
+});
+
+describe('mondayOf', () => {
+  it('returns the input when input is a Monday', () => {
+    expect(mondayOf('2026-05-04')).toBe('2026-05-04'); // 2026-05-04 is a Monday
+  });
+  it('returns the previous Monday for a Wednesday', () => {
+    expect(mondayOf('2026-05-06')).toBe('2026-05-04');
+  });
+  it('returns the previous Monday for a Sunday', () => {
+    expect(mondayOf('2026-05-10')).toBe('2026-05-04');
+  });
+});
+
+describe('generateWeeklyQuest', () => {
+  it('returns a single weekly instance generatedFor that Monday', () => {
+    const quests = generateWeeklyQuest({
+      attributeLevels: { STR: 5, DEX: 5, CON: 5, INT: 2, WIS: 5, CHA: 5 },
+      today: '2026-05-08', // Friday → Monday is 05-04
+    });
+    expect(quests).toHaveLength(1);
+    const q = quests[0]!;
+    expect(q.type).toBe('weekly');
+    expect(q.generatedFor).toBe('2026-05-04');
+    expect(q.attribute).toBe('INT');
+    expect(q.bonusXP).toBe(150);
+  });
+
+  it('breaks ties by ATTRIBUTES order (returns STR when STR and DEX both lowest)', () => {
+    const quests = generateWeeklyQuest({
+      attributeLevels: { STR: 1, DEX: 1, CON: 5, INT: 5, WIS: 5, CHA: 5 },
+      today: '2026-05-08',
+    });
+    expect(quests[0]!.attribute).toBe('STR');
+  });
+
+  it('produces a stable instance id for the same Monday', () => {
+    const a = generateWeeklyQuest({
+      attributeLevels: { STR: 1, DEX: 5, CON: 5, INT: 5, WIS: 5, CHA: 5 },
+      today: '2026-05-06',
+    });
+    const b = generateWeeklyQuest({
+      attributeLevels: { STR: 1, DEX: 5, CON: 5, INT: 5, WIS: 5, CHA: 5 },
+      today: '2026-05-08',
+    });
+    expect(a[0]!.id).toBe(b[0]!.id);
   });
 });
