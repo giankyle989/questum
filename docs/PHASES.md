@@ -39,6 +39,8 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 
 **Goal:** All game logic implemented as pure functions with comprehensive unit tests. No UI yet.
 
+**Status:** Complete (2026-05-08). 100% coverage on `src/game/`. All edge cases listed below have explicit tests.
+
 **Tasks:**
 
 1. Implement `src/game/constants.ts` with all values from `GAME_RULES.md`
