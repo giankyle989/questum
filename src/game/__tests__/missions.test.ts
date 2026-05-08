@@ -5,9 +5,11 @@ import {
   generateWeeklyQuest,
   mondayOf,
   validateMatchedMissions,
+  applyMissionBonus,
   type MissionTemplate,
   type MissionInstance,
 } from '@/game/missions';
+import type { AttributeStateLike } from '@/game/xp';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
 
 describe('MISSION_TEMPLATES', () => {
@@ -223,5 +225,68 @@ describe('validateMatchedMissions', () => {
       completedIds: new Set(),
     });
     expect(result.bonusByAttribute.STR).toBe(200);
+  });
+});
+
+const evenStates = (level: number, inProgressXp: number) =>
+  ATTRIBUTES.reduce(
+    (acc, a) => {
+      acc[a] = { level, inProgressXp };
+      return acc;
+    },
+    {} as Record<Attribute, AttributeStateLike>,
+  );
+
+const noBonus = (): Record<Attribute, number> =>
+  ATTRIBUTES.reduce(
+    (acc, a) => {
+      acc[a] = 0;
+      return acc;
+    },
+    {} as Record<Attribute, number>,
+  );
+
+describe('applyMissionBonus', () => {
+  it('applies bonus XP without any cap clamping (can exceed 200/day on attribute)', () => {
+    const states = evenStates(1, 0);
+    const bonus = noBonus();
+    bonus.STR = 200;
+    const result = applyMissionBonus(states, bonus);
+    // 200 → level 2 with 100 carry → 100 → level 3 with 0 carry. Wait: at level 2, threshold to reach 3 is 200.
+    // 100 < 200, so stay at level 2 with 100 in-progress.
+    expect(result.newStates.STR).toEqual({ level: 2, inProgressXp: 100 });
+    expect(result.levelUps).toEqual([{ attribute: 'STR', newLevel: 2 }]);
+  });
+
+  it('returns identity when no attribute has bonus', () => {
+    const states = evenStates(3, 50);
+    const result = applyMissionBonus(states, noBonus());
+    expect(result.newStates.STR).toEqual({ level: 3, inProgressXp: 50 });
+    expect(result.levelUps).toEqual([]);
+  });
+
+  it('applies bonus across multiple attributes and reports level-ups in attribute order', () => {
+    const states = evenStates(1, 80);
+    const bonus = noBonus();
+    bonus.STR = 30;
+    bonus.INT = 25;
+    const result = applyMissionBonus(states, bonus);
+    expect(result.newStates.STR).toEqual({ level: 2, inProgressXp: 10 });
+    expect(result.newStates.INT).toEqual({ level: 2, inProgressXp: 5 });
+    // Level-ups iterate in ATTRIBUTES order: STR, DEX, CON, INT, WIS, CHA
+    expect(result.levelUps).toEqual([
+      { attribute: 'STR', newLevel: 2 },
+      { attribute: 'INT', newLevel: 2 },
+    ]);
+  });
+
+  it('produces double level-ups when bonus stacks high (e.g., daily + weekly on same attribute)', () => {
+    // Per GAME_RULES §Per-log ceiling worst case: daily 50 + weekly 150 on same attribute = 200 bonus.
+    const states = evenStates(1, 0);
+    const bonus = noBonus();
+    bonus.STR = 200; // 50 + 150
+    const result = applyMissionBonus(states, bonus);
+    // 200 from level 1 with 0 in-progress: → level 2 (carry 100). Threshold 2→3 = 200, 100 < 200, stop.
+    expect(result.newStates.STR).toEqual({ level: 2, inProgressXp: 100 });
   });
 });

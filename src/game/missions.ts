@@ -1,5 +1,6 @@
 import { addDays, type ISODate } from '@/game/calendar';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
+import { applyXPGain, type AttributeStateLike, type LevelUp } from '@/game/xp';
 
 export type MissionType = 'daily' | 'weekly';
 
@@ -320,4 +321,32 @@ export function validateMatchedMissions(
     unknownIds: unknown,
     alreadyCompleted: already,
   };
+}
+
+export interface ApplyMissionBonusResult {
+  newStates: Record<Attribute, AttributeStateLike>;
+  levelUps: LevelUp[];
+}
+
+/**
+ * Add mission bonus XP to attribute states. Bonus XP is exempt from the daily
+ * cap per GAME_RULES §Mission matching, so this never clamps. Iterates
+ * attributes in ATTRIBUTES order so level-up reports are deterministic.
+ */
+export function applyMissionBonus(
+  states: Record<Attribute, AttributeStateLike>,
+  bonusByAttribute: Record<Attribute, number>,
+): ApplyMissionBonusResult {
+  const newStates = {} as Record<Attribute, AttributeStateLike>;
+  const levelUps: LevelUp[] = [];
+  for (const attribute of ATTRIBUTES) {
+    const bonus = bonusByAttribute[attribute] ?? 0;
+    const before = states[attribute];
+    const { state, levelUps: gained } = applyXPGain(before, bonus);
+    newStates[attribute] = state;
+    for (const newLevel of gained) {
+      levelUps.push({ attribute, newLevel });
+    }
+  }
+  return { newStates, levelUps };
 }
