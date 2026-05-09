@@ -104,13 +104,23 @@ CREATE TABLE missions (
   target          INTEGER NOT NULL DEFAULT 1,
   status          TEXT NOT NULL CHECK (status IN ('active', 'completed', 'expired')),
   generated_at    TEXT NOT NULL,
+  generated_for   TEXT NOT NULL DEFAULT '',  -- Phase 3 addition (migration 002)
   expires_at      TEXT NOT NULL,
   completed_at    TEXT
 );
 
 CREATE INDEX idx_missions_status ON missions(status);
 CREATE INDEX idx_missions_type_status ON missions(type, status);
+CREATE INDEX idx_missions_generated_for ON missions(type, generated_for, completed_at);
 ```
+
+Indexes:
+
+- `idx_missions_status` on `(status)`
+- `idx_missions_type_status` on `(type, status)`
+- `idx_missions_generated_for` on `(type, generated_for, completed_at)` — supports active-mission lookup queries
+
+The `generated_for` column was added in Phase 3 via migration 002. It records the calendar day (daily missions) or Monday of the week (weekly missions) for which a mission was generated. Mission active/inactive state is determined by comparing this column to the current day — `expires_at` is populated for schema compliance only and not consulted by the engine.
 
 ### `streak`
 

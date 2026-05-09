@@ -117,4 +117,41 @@ describe('applyMigrations', () => {
       ].sort(),
     );
   });
+
+  it('applies migration 002 cleanly on top of migration 001', async () => {
+    const { MIGRATIONS } = await import('./migrations/index');
+    await expect(applyMigrations(driver, [...MIGRATIONS])).resolves.toBeUndefined();
+
+    const versions = await driver.getAllAsync<{ version: number }>(
+      'SELECT version FROM schema_version ORDER BY version',
+    );
+    expect(versions.map((r) => r.version)).toEqual([1, 2]);
+  });
+
+  it('migration 002 adds generated_for column to missions with NOT NULL constraint', async () => {
+    const { MIGRATIONS } = await import('./migrations/index');
+    await applyMigrations(driver, [...MIGRATIONS]);
+
+    const columns = await driver.getAllAsync<{
+      name: string;
+      type: string;
+      notnull: number;
+      dflt_value: string | null;
+    }>('PRAGMA table_info(missions)');
+
+    const generatedFor = columns.find((c) => c.name === 'generated_for');
+    expect(generatedFor).toBeDefined();
+    expect(generatedFor?.type).toBe('TEXT');
+    expect(generatedFor?.notnull).toBe(1);
+  });
+
+  it('migration 002 creates idx_missions_generated_for index', async () => {
+    const { MIGRATIONS } = await import('./migrations/index');
+    await applyMigrations(driver, [...MIGRATIONS]);
+
+    const indexes = await driver.getAllAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_missions_generated_for'",
+    );
+    expect(indexes).toHaveLength(1);
+  });
 });
