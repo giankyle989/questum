@@ -30,6 +30,12 @@ module.exports = {
       functions: 100,
       lines: 100,
     },
+    './src/storage/repositories/': {
+      statements: 85,
+      branches: 85,
+      functions: 85,
+      lines: 85,
+    },
   },
   testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
 };

@@ -1,3 +1,5 @@
+import type { DbDriver } from '@/storage/db';
+
 export type SettingKey =
   | 'notifications_enabled'
   | 'notification_morning_time'
@@ -7,20 +9,28 @@ export type SettingKey =
   | 'decay_paused_year'
   | 'first_decay_shown'
   | 'ai_source_last_used'
-  | 'onboarding_complete';
+  | 'onboarding_complete'
+  | 'last_decay_run_day';
 
-const NOT_IMPL = (name: string): never => {
-  throw new Error(`settingsRepo.${name} not implemented in Phase 1`);
-};
-
-export async function getSetting(_key: SettingKey): Promise<string | null> {
-  return NOT_IMPL('getSetting');
+export async function getSetting(db: DbDriver, key: SettingKey): Promise<string | null> {
+  const row = await db.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    [key],
+  );
+  return row?.value ?? null;
 }
 
-export async function setSetting(_key: SettingKey, _value: string): Promise<void> {
-  NOT_IMPL('setSetting');
+export async function setSetting(db: DbDriver, key: SettingKey, value: string): Promise<void> {
+  await db.runAsync('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, value]);
 }
 
-export async function getAllSettings(): Promise<Record<string, string>> {
-  return NOT_IMPL('getAllSettings');
+export async function getAllSettings(db: DbDriver): Promise<Record<string, string>> {
+  const rows = await db.getAllAsync<{ key: string; value: string }>(
+    'SELECT key, value FROM settings',
+  );
+  const result: Record<string, string> = {};
+  for (const row of rows) {
+    result[row.key] = row.value;
+  }
+  return result;
 }
