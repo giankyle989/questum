@@ -13,6 +13,11 @@ import { applyMigrations } from '@/storage/migrationRunner';
 import { MIGRATIONS } from '@/storage/migrations';
 import { getDb } from '@/storage/db';
 import { logger } from '@/lib/logger';
+import { useSettingsStore } from '@/state/settingsStore';
+import { useCharacterStore } from '@/state/characterStore';
+import { useMissionsStore } from '@/state/missionsStore';
+import { useLogsStore } from '@/state/logsStore';
+import { useAppForegroundDecay } from '@/state/hooks/useAppForegroundDecay';
 import '../global.css';
 
 export default function RootLayout() {
@@ -26,6 +31,9 @@ export default function RootLayout() {
 
   const [dbReady, setDbReady] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const settingsLoading = useSettingsStore((s) => s.loading);
+
+  useAppForegroundDecay();
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +41,12 @@ export default function RootLayout() {
       try {
         const driver = await getDb();
         await applyMigrations(driver, [...MIGRATIONS]);
+        // Hydrate stores in series — characterStore/missionsStore may read state
+        // populated by settingsStore, and logsStore depends on logRepo state.
+        await useSettingsStore.getState().hydrate();
+        await useCharacterStore.getState().hydrate();
+        await useMissionsStore.getState().hydrate();
+        await useLogsStore.getState().hydrate();
         if (!cancelled) setDbReady(true);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -66,7 +80,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!fontsLoaded || !dbReady) {
+  if (!fontsLoaded || !dbReady || settingsLoading) {
     return (
       <View
         style={{
