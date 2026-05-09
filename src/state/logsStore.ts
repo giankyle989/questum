@@ -1,32 +1,105 @@
 import { create } from 'zustand';
+import { MockAIService } from '@/ai/MockAIService';
+import { todayLocalISODate } from '@/lib/clock';
+import * as logRepo from '@/storage/repositories/logRepo';
 import type { LogEntry } from '@/storage/repositories/logRepo';
+import { getDb } from '@/storage/db';
+import { useCharacterStore } from '@/state/characterStore';
+import { useMissionsStore } from '@/state/missionsStore';
+import { submitLog as submitLogFn } from '@/state/submitLog';
 
 export interface LogsStoreState {
   logs: LogEntry[];
   submitting: boolean;
   lastResultSummary: string | null;
-  error: string | null;
+  lowConfidence: boolean;
+  error: 'storage-error' | 'unknown' | null;
 
   hydrate: () => Promise<void>;
   submitLog: (text: string) => Promise<void>;
   cancelSubmit: () => void;
 }
 
-export const useLogsStore = create<LogsStoreState>((set) => ({
-  logs: [],
-  submitting: false,
-  lastResultSummary: null,
-  error: null,
+interface InternalLogsStoreState extends LogsStoreState {
+  _abortController: AbortController | null;
+}
 
-  hydrate: async () => {
-    set({ logs: [] });
-  },
+export const useLogsStore = create<LogsStoreState>((set, get) => {
+  const internalSet = set as (
+    partial:
+      | Partial<InternalLogsStoreState>
+      | ((state: InternalLogsStoreState) => Partial<InternalLogsStoreState>),
+  ) => void;
+  const internalGet = get as () => InternalLogsStoreState;
 
-  submitLog: async () => {
-    // Phase 3 will implement the AI → game → storage flow.
-  },
+  const initial: InternalLogsStoreState = {
+    logs: [],
+    submitting: false,
+    lastResultSummary: null,
+    lowConfidence: false,
+    error: null,
+    _abortController: null,
 
-  cancelSubmit: () => {
-    // Phase 3 will hook this to AbortController.abort().
-  },
-}));
+    hydrate: async () => {
+      const db = await getDb();
+      const logs = await logRepo.getRecentLogs(db, 50, 0);
+      internalSet({ logs });
+    },
+
+    submitLog: async (text) => {
+      const controller = new AbortController();
+      internalSet({
+        _abortController: controller,
+        submitting: true,
+        error: null,
+        lowConfidence: false,
+      });
+
+      const db = await getDb();
+      const today = todayLocalISODate();
+      const aiService = new MockAIService();
+
+      const result = await submitLogFn(text, {
+        aiService,
+        db,
+        today,
+        signal: controller.signal,
+      });
+
+      if (result.ok) {
+        await useCharacterStore.getState().hydrate();
+        await useMissionsStore.getState().generateForToday();
+        await internalGet().hydrate();
+        internalSet({
+          submitting: false,
+          lastResultSummary: null,
+          _abortController: null,
+        });
+        return;
+      }
+
+      switch (result.reason) {
+        case 'low-confidence':
+          internalSet({ submitting: false, lowConfidence: true, _abortController: null });
+          break;
+        case 'aborted':
+          internalSet({ submitting: false, _abortController: null });
+          break;
+        case 'storage-error':
+          internalSet({ submitting: false, error: 'storage-error', _abortController: null });
+          break;
+        case 'invalid-primary':
+        case 'unknown':
+        default:
+          internalSet({ submitting: false, error: 'unknown', _abortController: null });
+          break;
+      }
+    },
+
+    cancelSubmit: () => {
+      internalGet()._abortController?.abort();
+    },
+  };
+
+  return initial;
+});
