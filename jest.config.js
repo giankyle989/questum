@@ -24,6 +24,12 @@ module.exports = {
       functions: 100,
       lines: 100,
     },
+    './src/lib/clock.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
   },
   testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
 };
