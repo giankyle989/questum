@@ -33,6 +33,15 @@ export interface LogResult {
 }
 
 export interface AIService {
+  /**
+   * Stable identifier written to the DB on every log. Phase 5 swaps
+   * mock→apple by changing the implementation, no code in submitLog.
+   */
+  readonly sourceId: 'apple' | 'gemini' | 'mock';
+
+  /** Human-readable name for the Settings screen. */
+  readonly displayName: string;
+
   /** Returns true if this implementation can run on the current device. */
   isAvailable(): Promise<boolean>;
 
@@ -45,7 +54,4 @@ export interface AIService {
    * and abort themselves if exceeded.
    */
   classifyLog(input: ClassifyLogInput, signal?: AbortSignal): Promise<LogResult>;
-
-  /** Human-readable name for the Settings screen. */
-  readonly displayName: string;
 }
