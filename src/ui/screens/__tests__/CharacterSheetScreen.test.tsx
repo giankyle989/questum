@@ -45,6 +45,15 @@ jest.mock('expo-linking', () => ({
   openSettings: () => mockOpenSettings(),
 }));
 
+const mockImpactAsync = jest.fn().mockResolvedValue(undefined);
+const mockNotificationAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-haptics', () => ({
+  impactAsync: (...args: unknown[]) => mockImpactAsync(...args),
+  notificationAsync: (...args: unknown[]) => mockNotificationAsync(...args),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  NotificationFeedbackType: { Success: 'success' },
+}));
+
 interface MockAvailabilityState {
   available: boolean;
   displayName: string;
@@ -121,6 +130,27 @@ describe('CharacterSheetScreen', () => {
       fireEvent.press(getByTestId('fab-log'));
       expect(mockOpenSettings).toHaveBeenCalledTimes(1);
       expect(mockPush).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('FAB haptics', () => {
+    beforeEach(() => {
+      mockImpactAsync.mockClear();
+      mockAvailabilityState = { available: true, displayName: 'Mock (development)' };
+    });
+
+    it('fires a light impact on FAB press when AI is available', () => {
+      const { getByTestId } = render(<CharacterSheetScreen />);
+      fireEvent.press(getByTestId('fab-log'));
+      expect(mockImpactAsync).toHaveBeenCalledTimes(1);
+      expect(mockImpactAsync).toHaveBeenCalledWith('light');
+    });
+
+    it('does NOT fire haptics on disabled FAB press', () => {
+      mockAvailabilityState = { available: false, displayName: 'Mock (development)' };
+      const { getByTestId } = render(<CharacterSheetScreen />);
+      fireEvent.press(getByTestId('fab-log'));
+      expect(mockImpactAsync).not.toHaveBeenCalled();
     });
   });
 });

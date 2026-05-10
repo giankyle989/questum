@@ -26,3 +26,9 @@ for (const name of winterLazyGlobals) {
 }
 
 require('@testing-library/jest-native/extend-expect');
+
+// Set up Reanimated's deterministic Jest mock so components that use
+// useSharedValue / withTiming / useAnimatedStyle etc. can render under
+// jest-expo without the native worklet runtime.
+// Reanimated 4 ships setUpTests() in its mock — Form A.
+require('react-native-reanimated').setUpTests();

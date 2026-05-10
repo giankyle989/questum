@@ -20,6 +20,7 @@ import { useLogsStore } from '@/state/logsStore';
 import { useAppForegroundDecay } from '@/state/hooks/useAppForegroundDecay';
 import { useAIAvailabilityProbe } from '@/state/hooks/useAIAvailabilityProbe';
 import { AIUnavailableBanner } from '@/ui/components/AIUnavailableBanner';
+import { AnimationOrchestrator } from '@/ui/components/AnimationOrchestrator';
 import '../global.css';
 
 /**
@@ -38,6 +39,7 @@ function PostBootShell(): React.JSX.Element {
     <>
       <AIUnavailableBanner />
       <Slot />
+      <AnimationOrchestrator />
     </>
   );
 }

@@ -8,6 +8,7 @@ import { characterLevel, xpToReachLevel } from '@/game/xp';
 import { useAIAvailabilityStore } from '@/state/aiAvailabilityStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
+import { haptics } from '@/lib/haptics';
 import { AttributeBar } from '@/ui/components/AttributeBar';
 import { AvatarBadge } from '@/ui/components/AvatarBadge';
 import { MissionCard } from '@/ui/components/MissionCard';
@@ -128,6 +129,7 @@ export default function CharacterSheetScreen() {
             void Linking.openSettings();
             return;
           }
+          haptics.tap();
           router.push('/(main)/log');
         }}
         className={`absolute bottom-8 right-6 h-14 w-14 items-center justify-center rounded-full ${

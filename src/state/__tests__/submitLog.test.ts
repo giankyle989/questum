@@ -55,6 +55,16 @@ describe('submitLog', () => {
 
     const streak = await characterRepo.getStreak(driver);
     expect(streak.currentLength).toBe(1);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.prevStreak).toBeGreaterThanOrEqual(0);
+      expect(result.newStreak).toBeGreaterThanOrEqual(result.prevStreak);
+      expect(typeof result.gains).toBe('object');
+      for (const value of Object.values(result.gains)) {
+        expect(value).toBeGreaterThan(0);
+      }
+    }
   });
 
   it('low-confidence input returns { ok: false, reason: "low-confidence" } and writes nothing', async () => {
@@ -188,6 +198,9 @@ describe('submitLog', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.levelUps.some((lu) => lu.attribute === 'CON')).toBe(true);
+      for (const lu of result.levelUps) {
+        expect(result.gains[lu.attribute]).toBeGreaterThan(0);
+      }
     }
   });
 

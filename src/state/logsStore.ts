@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { getAIService } from '@/ai/aiServiceFactory';
+import type { Attribute } from '@/game/constants';
+import type { LevelUp } from '@/game/xp';
 import { todayLocalISODate } from '@/lib/clock';
+import { haptics } from '@/lib/haptics';
 import * as logRepo from '@/storage/repositories/logRepo';
 import type { LogEntry } from '@/storage/repositories/logRepo';
 import { getDb } from '@/storage/db';
@@ -8,18 +11,27 @@ import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
 import { submitLog as submitLogFn } from '@/state/submitLog';
 
+export interface LastSubmitResult {
+  gains: Partial<Record<Attribute, number>>;
+  levelUps: LevelUp[];
+  missionCompletions: string[];
+  prevStreak: number;
+  newStreak: number;
+}
+
 export interface LogsStoreState {
   logs: LogEntry[];
   submitting: boolean;
   lastResultSummary: string | null;
   lowConfidence: boolean;
   error: 'storage-error' | 'unknown' | null;
-  /** Underlying exception message for the most recent error. Surfaced in __DEV__ only. */
   errorDetail: string | null;
+  lastSubmitResult: LastSubmitResult | null;
 
   hydrate: () => Promise<void>;
   submitLog: (text: string) => Promise<void>;
   cancelSubmit: () => void;
+  clearLastSubmitResult: () => void;
 }
 
 interface InternalLogsStoreState extends LogsStoreState {
@@ -41,6 +53,7 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
     lowConfidence: false,
     error: null,
     errorDetail: null,
+    lastSubmitResult: null,
     _abortController: null,
 
     hydrate: async () => {
@@ -77,8 +90,16 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
         internalSet({
           submitting: false,
           lastResultSummary: null,
+          lastSubmitResult: {
+            gains: result.gains,
+            levelUps: result.levelUps,
+            missionCompletions: result.missionCompletions,
+            prevStreak: result.prevStreak,
+            newStreak: result.newStreak,
+          },
           _abortController: null,
         });
+        haptics.submit();
         return;
       }
 
@@ -113,6 +134,10 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
 
     cancelSubmit: () => {
       internalGet()._abortController?.abort();
+    },
+
+    clearLastSubmitResult: () => {
+      internalSet({ lastSubmitResult: null });
     },
   };
 

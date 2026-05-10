@@ -25,7 +25,14 @@ export interface SubmitLogDeps {
 }
 
 export type SubmitLogResult =
-  | { ok: true; levelUps: LevelUp[]; missionCompletions: string[] }
+  | {
+      ok: true;
+      gains: Partial<Record<Attribute, number>>;
+      levelUps: LevelUp[];
+      missionCompletions: string[];
+      prevStreak: number;
+      newStreak: number;
+    }
   | {
       ok: false;
       reason: 'low-confidence' | 'invalid-primary' | 'aborted' | 'storage-error' | 'unknown';
@@ -229,9 +236,19 @@ export async function submitLog(text: string, deps: SubmitLogDeps): Promise<Subm
   }
 
   // 16. Return success
+  // Build sparse gains map: only include attributes that gained > 0 XP.
+  const gains: Partial<Record<Attribute, number>> = {};
+  for (const attr of ATTRIBUTES) {
+    const v = actuallyApplied[attr];
+    if (v > 0) gains[attr] = v;
+  }
+
   return {
     ok: true,
+    gains,
     levelUps: [...levelUps, ...bonusLevelUps],
     missionCompletions: completedIds,
+    prevStreak: streak.currentLength,
+    newStreak,
   };
 }
