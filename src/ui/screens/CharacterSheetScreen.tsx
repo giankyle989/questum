@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
 import { characterLevel, xpToReachLevel } from '@/game/xp';
+import { useAIAvailabilityStore } from '@/state/aiAvailabilityStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
 import { AttributeBar } from '@/ui/components/AttributeBar';
@@ -27,6 +29,7 @@ export default function CharacterSheetScreen() {
   const attributeStates = useCharacterStore((s) => s.attributeStates);
   const streak = useCharacterStore((s) => s.streak);
   const activeMissions = useMissionsStore((s) => s.active);
+  const aiAvailable = useAIAvailabilityStore((s) => s.available);
   const previewMissions = useMemo(() => activeMissions.slice(0, 3), [activeMissions]);
 
   // Build a Record<Attribute, number> of levels for `characterLevel`. If the
@@ -115,17 +118,29 @@ export default function CharacterSheetScreen() {
         </View>
       </ScrollView>
 
-      <TouchableOpacity
+      <Pressable
         testID="fab-log"
         accessibilityRole="button"
-        accessibilityLabel="Log activity"
-        onPress={() => router.push('/(main)/log')}
-        className="absolute bottom-8 right-6 h-14 w-14 items-center justify-center rounded-full bg-accent"
+        accessibilityLabel={aiAvailable ? 'Log activity' : 'Open Settings'}
+        accessibilityState={{ disabled: !aiAvailable }}
+        onPress={() => {
+          if (!aiAvailable) {
+            void Linking.openSettings();
+            return;
+          }
+          router.push('/(main)/log');
+        }}
+        className={`absolute bottom-8 right-6 h-14 w-14 items-center justify-center rounded-full ${
+          aiAvailable ? 'bg-accent' : 'bg-surface-2 opacity-40'
+        }`}
       >
-        <Text className="font-manrope-bold text-bg" style={{ fontSize: 28, lineHeight: 30 }}>
+        <Text
+          className={aiAvailable ? 'font-manrope-bold text-bg' : 'font-manrope-bold text-text-mute'}
+          style={{ fontSize: 28, lineHeight: 30 }}
+        >
           +
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 }

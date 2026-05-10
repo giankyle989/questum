@@ -39,6 +39,26 @@ jest.mock('@/state/missionsStore', () => ({
   ),
 }));
 
+const mockOpenSettings = jest.fn(async () => {});
+jest.mock('expo-linking', () => ({
+  __esModule: true,
+  openSettings: () => mockOpenSettings(),
+}));
+
+interface MockAvailabilityState {
+  available: boolean;
+  displayName: string;
+}
+let mockAvailabilityState: MockAvailabilityState = {
+  available: true,
+  displayName: 'Mock (development)',
+};
+jest.mock('@/state/aiAvailabilityStore', () => ({
+  useAIAvailabilityStore: jest.fn((selector: (s: unknown) => unknown) =>
+    selector(mockAvailabilityState),
+  ),
+}));
+
 import CharacterSheetScreen from '@/ui/screens/CharacterSheetScreen';
 
 describe('CharacterSheetScreen', () => {
@@ -77,5 +97,30 @@ describe('CharacterSheetScreen', () => {
     fireEvent.press(getByTestId('fab-log'));
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/(main)/log');
+  });
+
+  describe('FAB when AI is unavailable', () => {
+    beforeEach(() => {
+      mockOpenSettings.mockClear();
+      mockPush.mockClear();
+      mockAvailabilityState = { available: false, displayName: 'Mock (development)' };
+    });
+
+    afterEach(() => {
+      mockAvailabilityState = { available: true, displayName: 'Mock (development)' };
+    });
+
+    it('exposes accessibilityState.disabled = true', () => {
+      const { getByTestId } = render(<CharacterSheetScreen />);
+      const fab = getByTestId('fab-log');
+      expect(fab.props.accessibilityState?.disabled).toBe(true);
+    });
+
+    it('opens system Settings on tap, does not navigate to /log', () => {
+      const { getByTestId } = render(<CharacterSheetScreen />);
+      fireEvent.press(getByTestId('fab-log'));
+      expect(mockOpenSettings).toHaveBeenCalledTimes(1);
+      expect(mockPush).not.toHaveBeenCalled();
+    });
   });
 });
