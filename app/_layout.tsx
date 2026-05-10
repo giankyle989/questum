@@ -20,6 +20,18 @@ import { useLogsStore } from '@/state/logsStore';
 import { useAppForegroundDecay } from '@/state/hooks/useAppForegroundDecay';
 import '../global.css';
 
+/**
+ * Mounts after migrations + store hydration are complete (gated by `dbReady`).
+ * Holds the decay hook so its initial AppState listener and cold-start
+ * `runDecay()` only fire AFTER tables exist — otherwise `getLastLogDay` runs
+ * a SELECT on `logs` before migration 001 has applied and crashes with
+ * "no such table: logs" on a fresh install.
+ */
+function PostBootShell(): React.JSX.Element {
+  useAppForegroundDecay();
+  return <Slot />;
+}
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
@@ -32,8 +44,6 @@ export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const settingsLoading = useSettingsStore((s) => s.loading);
-
-  useAppForegroundDecay();
 
   useEffect(() => {
     let cancelled = false;
@@ -95,5 +105,5 @@ export default function RootLayout() {
     );
   }
 
-  return <Slot />;
+  return <PostBootShell />;
 }
