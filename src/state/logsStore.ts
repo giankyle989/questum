@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { MockAIService } from '@/ai/MockAIService';
+import { getAIService } from '@/ai/aiServiceFactory';
 import { todayLocalISODate } from '@/lib/clock';
 import * as logRepo from '@/storage/repositories/logRepo';
 import type { LogEntry } from '@/storage/repositories/logRepo';
@@ -61,7 +61,7 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
 
       const db = await getDb();
       const today = todayLocalISODate();
-      const aiService = new MockAIService();
+      const aiService = getAIService();
 
       const result = await submitLogFn(text, {
         aiService,
