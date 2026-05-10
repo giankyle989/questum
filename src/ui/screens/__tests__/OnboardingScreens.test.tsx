@@ -75,6 +75,20 @@ jest.mock('@/state/settingsStore', () => {
   return { useSettingsStore };
 });
 
+interface MockAvailabilityState {
+  available: boolean;
+  displayName: string;
+}
+let mockAvailabilityState: MockAvailabilityState = {
+  available: true,
+  displayName: 'Mock (development)',
+};
+jest.mock('@/state/aiAvailabilityStore', () => ({
+  useAIAvailabilityStore: jest.fn((selector: (s: unknown) => unknown) =>
+    selector(mockAvailabilityState),
+  ),
+}));
+
 import AIConfirmScreen from '@/ui/screens/onboarding/AIConfirmScreen';
 import CharacterCreationScreen from '@/ui/screens/onboarding/CharacterCreationScreen';
 import FirstLogScreen from '@/ui/screens/onboarding/FirstLogScreen';
@@ -163,5 +177,28 @@ describe('FirstLogScreen', () => {
     expect(mockSetOnboardingComplete).toHaveBeenCalledWith(true);
     expect(mockReplace).toHaveBeenCalledTimes(1);
     expect(mockReplace).toHaveBeenCalledWith('/(main)/character');
+  });
+});
+
+describe('AIConfirmScreen — AI unavailable', () => {
+  beforeEach(() => {
+    mockAvailabilityState = { available: false, displayName: 'Mock (development)' };
+  });
+
+  afterEach(() => {
+    mockAvailabilityState = { available: true, displayName: 'Mock (development)' };
+  });
+
+  it('switches the engine label to the unavailable copy', () => {
+    const { getByTestId } = render(<AIConfirmScreen />);
+    expect(getByTestId('ai-confirm-engine').props.children).toBe('Apple Intelligence unavailable');
+  });
+
+  it('disables Continue with the resolve copy', () => {
+    const { getByTestId } = render(<AIConfirmScreen />);
+    const continueBtn = getByTestId('ai-confirm-continue');
+    expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
+    const innerText = continueBtn.findByProps({ testID: 'ai-confirm-continue-label' });
+    expect(innerText.props.children).toBe('Resolve to continue');
   });
 });
