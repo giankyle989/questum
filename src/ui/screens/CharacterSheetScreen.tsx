@@ -5,7 +5,9 @@ import { useRouter } from 'expo-router';
 import { ATTRIBUTES, type Attribute } from '@/game/constants';
 import { characterLevel, xpToReachLevel } from '@/game/xp';
 import { useCharacterStore } from '@/state/characterStore';
+import { useMissionsStore } from '@/state/missionsStore';
 import { AttributeBar } from '@/ui/components/AttributeBar';
+import { MissionCard } from '@/ui/components/MissionCard';
 import { StreakIndicator } from '@/ui/components/StreakIndicator';
 
 /**
@@ -13,14 +15,18 @@ import { StreakIndicator } from '@/ui/components/StreakIndicator';
  * the character store, computes the character level via the pure game engine,
  * and renders the six attribute bars + a "+" FAB to open the log entry sheet.
  *
- * Mission preview is wired in Task 5.4; this screen renders only the bars and
- * FAB for now (Slice 1 scope).
+ * Mission preview shows up to 3 active missions (dailies first, weekly last,
+ * matching the canonical order in `missionsStore.active`). The full Missions
+ * tab still owns the completed list, expiry text, etc. — this is just a
+ * glanceable card on the home screen.
  */
 export default function CharacterSheetScreen() {
   const router = useRouter();
   const character = useCharacterStore((s) => s.character);
   const attributeStates = useCharacterStore((s) => s.attributeStates);
   const streak = useCharacterStore((s) => s.streak);
+  const activeMissions = useMissionsStore((s) => s.active);
+  const previewMissions = useMemo(() => activeMissions.slice(0, 3), [activeMissions]);
 
   // Build a Record<Attribute, number> of levels for `characterLevel`. If the
   // store hasn't hydrated an attribute (shouldn't happen post-onboarding, but
@@ -92,6 +98,26 @@ export default function CharacterSheetScreen() {
               />
             );
           })}
+        </View>
+
+        <View testID="mission-preview" className="mt-10">
+          <Text className="font-manrope-bold text-text" style={{ fontSize: 18 }}>
+            Today&apos;s Missions
+          </Text>
+
+          <View className="mt-3 gap-3">
+            {activeMissions.length === 0 ? (
+              <Text
+                testID="mission-preview-empty"
+                className="font-manrope text-text-mute"
+                style={{ fontSize: 14 }}
+              >
+                No missions yet — submit your first log to generate missions.
+              </Text>
+            ) : (
+              previewMissions.map((m) => <MissionCard key={m.id} mission={m} />)
+            )}
+          </View>
         </View>
       </ScrollView>
 
