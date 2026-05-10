@@ -7,6 +7,7 @@ import { characterLevel, xpToReachLevel } from '@/game/xp';
 import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
 import { AttributeBar } from '@/ui/components/AttributeBar';
+import { AvatarBadge } from '@/ui/components/AvatarBadge';
 import { MissionCard } from '@/ui/components/MissionCard';
 import { StreakIndicator } from '@/ui/components/StreakIndicator';
 
@@ -57,7 +58,6 @@ export default function CharacterSheetScreen() {
     return map;
   }, [attributeStates]);
 
-  const initial = character?.name?.charAt(0)?.toUpperCase() ?? '?';
   const displayName = character?.name ?? '';
 
   return (
@@ -65,14 +65,8 @@ export default function CharacterSheetScreen() {
       <ScrollView contentContainerClassName="px-4 pb-32 pt-12">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
-            <View
-              testID="avatar-placeholder"
-              className="h-14 w-14 items-center justify-center rounded-full bg-surface-2"
-            >
-              <Text className="font-manrope-bold text-text" style={{ fontSize: 22 }}>
-                {initial}
-              </Text>
-            </View>
+            <AvatarBadge avatarId={character?.avatarId} size={56} />
+
             <View>
               <Text className="font-manrope-bold text-text" style={{ fontSize: 20 }}>
                 {displayName}

@@ -2,28 +2,8 @@ import { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { ATTRIBUTE_COLORS } from '@/game/constants';
 import { useCharacterStore } from '@/state/characterStore';
-
-interface AvatarChoice {
-  id: string;
-  letter: string;
-  color: string;
-}
-
-/**
- * Six preset avatars — Phase 3 ships placeholder colored circles with letters.
- * Real avatar art is a Phase 4+ swap; the IDs (`avatar_1`..`avatar_6`) stay
- * stable so persisted character rows still resolve.
- */
-const AVATARS: readonly AvatarChoice[] = [
-  { id: 'avatar_1', letter: 'A', color: ATTRIBUTE_COLORS.STR },
-  { id: 'avatar_2', letter: 'B', color: ATTRIBUTE_COLORS.DEX },
-  { id: 'avatar_3', letter: 'C', color: ATTRIBUTE_COLORS.CON },
-  { id: 'avatar_4', letter: 'D', color: ATTRIBUTE_COLORS.INT },
-  { id: 'avatar_5', letter: 'E', color: ATTRIBUTE_COLORS.WIS },
-  { id: 'avatar_6', letter: 'F', color: ATTRIBUTE_COLORS.CHA },
-];
+import { AVATAR_IDS, AvatarBadge, getAvatarPreset } from '@/ui/components/AvatarBadge';
 
 /**
  * Onboarding step 3 — character name + avatar. Submits via the character
@@ -81,26 +61,24 @@ export default function CharacterCreationScreen() {
         </Text>
 
         <View className="mt-4 flex-row flex-wrap gap-4">
-          {AVATARS.map((avatar) => {
-            const isSelected = avatar.id === selectedAvatarId;
+          {AVATAR_IDS.map((avatarId) => {
+            const isSelected = avatarId === selectedAvatarId;
+            const preset = getAvatarPreset(avatarId);
             return (
               <TouchableOpacity
-                key={avatar.id}
-                testID={`avatar-option-${avatar.id}`}
+                key={avatarId}
+                testID={`avatar-option-${avatarId}`}
                 accessibilityRole="button"
-                accessibilityLabel={`Select avatar ${avatar.letter}`}
+                accessibilityLabel={`Select avatar ${preset.letter}`}
                 accessibilityState={{ selected: isSelected }}
-                onPress={() => setSelectedAvatarId(avatar.id)}
-                className="h-16 w-16 items-center justify-center rounded-full"
+                onPress={() => setSelectedAvatarId(avatarId)}
                 style={{
-                  backgroundColor: avatar.color,
+                  borderRadius: 32,
                   borderWidth: isSelected ? 3 : 0,
                   borderColor: '#E8C547',
                 }}
               >
-                <Text className="font-manrope-bold text-bg" style={{ fontSize: 22 }}>
-                  {avatar.letter}
-                </Text>
+                <AvatarBadge avatarId={avatarId} size={64} />
               </TouchableOpacity>
             );
           })}
