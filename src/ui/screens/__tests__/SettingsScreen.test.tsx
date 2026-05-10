@@ -12,10 +12,13 @@ interface MockSettingsState {
   aiSourceLastUsed: 'apple' | 'gemini' | 'mock' | 'none';
   setNotificationsEnabled: (value: boolean) => Promise<void>;
   setDecayPaused: (value: boolean) => Promise<void>;
+  devForceAIUnavailable: boolean;
+  setDevForceAIUnavailable: (value: boolean) => Promise<void>;
 }
 
 const mockSetNotificationsEnabled = jest.fn(async () => {});
 const mockSetDecayPaused = jest.fn(async () => {});
+const mockSetDevForceAIUnavailable = jest.fn(async () => {});
 
 const defaultCharacterState: MockCharacterState = {
   character: {
@@ -32,6 +35,8 @@ const defaultSettingsState: MockSettingsState = {
   aiSourceLastUsed: 'mock',
   setNotificationsEnabled: mockSetNotificationsEnabled,
   setDecayPaused: mockSetDecayPaused,
+  devForceAIUnavailable: false,
+  setDevForceAIUnavailable: mockSetDevForceAIUnavailable,
 };
 
 let mockCharacterState: MockCharacterState = { ...defaultCharacterState };
@@ -50,12 +55,21 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { version: '0.1.0' } },
 }));
 
+const mockRunProbe = jest.fn(async () => {});
+jest.mock('@/state/aiAvailabilityStore', () => ({
+  useAIAvailabilityStore: {
+    getState: () => ({ runProbe: mockRunProbe }),
+  },
+}));
+
 import SettingsScreen from '@/ui/screens/SettingsScreen';
 
 describe('SettingsScreen', () => {
   beforeEach(() => {
     mockSetNotificationsEnabled.mockClear();
     mockSetDecayPaused.mockClear();
+    mockSetDevForceAIUnavailable.mockClear();
+    mockRunProbe.mockClear();
     mockCharacterState = {
       character: defaultCharacterState.character ? { ...defaultCharacterState.character } : null,
     };
@@ -63,6 +77,7 @@ describe('SettingsScreen', () => {
       ...defaultSettingsState,
       setNotificationsEnabled: mockSetNotificationsEnabled,
       setDecayPaused: mockSetDecayPaused,
+      setDevForceAIUnavailable: mockSetDevForceAIUnavailable,
     };
   });
 
@@ -97,5 +112,23 @@ describe('SettingsScreen', () => {
   it('renders the app version string from expo-constants', () => {
     const { getByText } = render(<SettingsScreen />);
     expect(getByText('0.1.0')).toBeTruthy();
+  });
+
+  describe('Developer — Force AI unavailable', () => {
+    it('renders the toggle in __DEV__', () => {
+      const { getByTestId } = render(<SettingsScreen />);
+      expect(getByTestId('settings-dev-force-ai-unavailable')).toBeTruthy();
+    });
+
+    it('flipping the toggle persists the value and re-runs the probe', async () => {
+      const { getByTestId } = render(<SettingsScreen />);
+      fireEvent(getByTestId('settings-dev-force-ai-unavailable'), 'valueChange', true);
+      // Wait one microtask for the async onValueChange handler to flush.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(mockSetDevForceAIUnavailable).toHaveBeenCalledTimes(1);
+      expect(mockSetDevForceAIUnavailable).toHaveBeenCalledWith(true);
+      expect(mockRunProbe).toHaveBeenCalledTimes(1);
+    });
   });
 });

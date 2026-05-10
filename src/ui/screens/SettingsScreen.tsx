@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
+import { useAIAvailabilityStore } from '@/state/aiAvailabilityStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useSettingsStore } from '@/state/settingsStore';
 
@@ -71,6 +72,8 @@ export default function SettingsScreen() {
   const aiSourceLastUsed = useSettingsStore((s) => s.aiSourceLastUsed);
   const setNotificationsEnabled = useSettingsStore((s) => s.setNotificationsEnabled);
   const setDecayPaused = useSettingsStore((s) => s.setDecayPaused);
+  const devForceAIUnavailable = useSettingsStore((s) => s.devForceAIUnavailable);
+  const setDevForceAIUnavailable = useSettingsStore((s) => s.setDevForceAIUnavailable);
 
   const characterName = character?.name ?? 'Unknown';
   const aiSourceLabel = AI_SOURCE_LABEL[aiSourceLastUsed];
@@ -143,6 +146,22 @@ export default function SettingsScreen() {
                 Reset character
               </Text>
             </Pressable>
+            <Row
+              label="Force AI unavailable"
+              testID="settings-dev-force-ai-unavailable-row"
+              value={
+                <Switch
+                  testID="settings-dev-force-ai-unavailable"
+                  value={devForceAIUnavailable}
+                  onValueChange={(v) => {
+                    void (async () => {
+                      await setDevForceAIUnavailable(v);
+                      await useAIAvailabilityStore.getState().runProbe();
+                    })();
+                  }}
+                />
+              }
+            />
           </Section>
         ) : null}
       </ScrollView>
