@@ -1,11 +1,3 @@
-import { Text, View } from 'react-native';
+import HistoryScreen from '@/ui/screens/HistoryScreen';
 
-export default function History() {
-  return (
-    <View className="flex-1 items-center justify-center bg-bg">
-      <Text className="font-manrope-bold text-text" style={{ fontSize: 18 }}>
-        History
-      </Text>
-    </View>
-  );
-}
+export default HistoryScreen;
