@@ -9,6 +9,7 @@ module.exports = {
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^expo-sqlite$': '<rootDir>/src/__mocks__/expo-sqlite.ts',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
   coverageThreshold: {
@@ -19,6 +20,12 @@ module.exports = {
       lines: 100,
     },
     './src/ai/MockAIService.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
+    './src/ai/aiServiceFactory.ts': {
       statements: 100,
       branches: 100,
       functions: 100,
@@ -38,4 +45,7 @@ module.exports = {
     },
   },
   testPathIgnorePatterns: ['/node_modules/', '/.expo/'],
+  globals: {
+    __DEV__: true,
+  },
 };
