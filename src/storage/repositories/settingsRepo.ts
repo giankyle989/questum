@@ -10,7 +10,8 @@ export type SettingKey =
   | 'first_decay_shown'
   | 'ai_source_last_used'
   | 'onboarding_complete'
-  | 'last_decay_run_day';
+  | 'last_decay_run_day'
+  | 'dev_force_ai_unavailable';
 
 export async function getSetting(db: DbDriver, key: SettingKey): Promise<string | null> {
   const row = await db.getFirstAsync<{ value: string }>(
