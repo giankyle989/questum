@@ -70,38 +70,41 @@ function rowToLogEntry(row: LogRow, attributeXp: Partial<Record<Attribute, numbe
   };
 }
 
+/**
+ * Inserts a `logs` row plus its `log_attribute_xp` child rows in sequence.
+ * Atomicity is the caller's responsibility — `submitLog` already wraps the
+ * full pipeline in `withTransactionAsync`. expo-sqlite does not support
+ * nested transactions, so this function MUST NOT introduce its own.
+ */
 export async function insertLog(db: DbDriver, input: LogInsert): Promise<LogEntry> {
-  let logId = 0;
-  await db.withTransactionAsync(async () => {
-    const result = await db.runAsync(
-      `INSERT INTO logs (
-        text, created_at, day, ai_summary, primary_attribute,
-        total_xp, confidence, improvement, ai_source
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        input.text,
-        input.createdAt,
-        input.day,
-        input.aiSummary,
-        input.primaryAttribute,
-        input.totalXp,
-        input.confidence,
-        input.improvement ? 1 : 0,
-        input.aiSource,
-      ],
-    );
-    logId = result.lastInsertRowId;
+  const result = await db.runAsync(
+    `INSERT INTO logs (
+      text, created_at, day, ai_summary, primary_attribute,
+      total_xp, confidence, improvement, ai_source
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      input.text,
+      input.createdAt,
+      input.day,
+      input.aiSummary,
+      input.primaryAttribute,
+      input.totalXp,
+      input.confidence,
+      input.improvement ? 1 : 0,
+      input.aiSource,
+    ],
+  );
+  const logId = result.lastInsertRowId;
 
-    for (const [attribute, xp] of Object.entries(input.attributeXp)) {
-      if (typeof xp === 'number' && xp > 0) {
-        await db.runAsync('INSERT INTO log_attribute_xp (log_id, attribute, xp) VALUES (?, ?, ?)', [
-          logId,
-          attribute,
-          xp,
-        ]);
-      }
+  for (const [attribute, xp] of Object.entries(input.attributeXp)) {
+    if (typeof xp === 'number' && xp > 0) {
+      await db.runAsync('INSERT INTO log_attribute_xp (log_id, attribute, xp) VALUES (?, ?, ?)', [
+        logId,
+        attribute,
+        xp,
+      ]);
     }
-  });
+  }
 
   const sparseAttributeXp: Partial<Record<Attribute, number>> = {};
   for (const [attribute, xp] of Object.entries(input.attributeXp)) {
@@ -197,22 +200,26 @@ export async function getDailyXpEarned(
   return result;
 }
 
+/**
+ * Upserts daily-XP gains in sequence. Atomicity is the caller's responsibility
+ * — wrap in `withTransactionAsync` if needed (e.g., `submitLog` does this).
+ * expo-sqlite does not support nested transactions, so this function MUST NOT
+ * introduce its own.
+ */
 export async function incrementDailyXpEarned(
   db: DbDriver,
   day: string,
   gains: Partial<Record<Attribute, number>>,
 ): Promise<void> {
-  await db.withTransactionAsync(async () => {
-    for (const [attribute, gain] of Object.entries(gains)) {
-      if (typeof gain === 'number' && gain > 0) {
-        await db.runAsync(
-          `INSERT INTO daily_xp_earned (day, attribute, xp_earned) VALUES (?, ?, ?)
-           ON CONFLICT(day, attribute) DO UPDATE SET xp_earned = xp_earned + excluded.xp_earned`,
-          [day, attribute, gain],
-        );
-      }
+  for (const [attribute, gain] of Object.entries(gains)) {
+    if (typeof gain === 'number' && gain > 0) {
+      await db.runAsync(
+        `INSERT INTO daily_xp_earned (day, attribute, xp_earned) VALUES (?, ?, ?)
+         ON CONFLICT(day, attribute) DO UPDATE SET xp_earned = xp_earned + excluded.xp_earned`,
+        [day, attribute, gain],
+      );
     }
-  });
+  }
 }
 
 export async function pruneDailyXpOlderThanDays(db: DbDriver, days: number): Promise<void> {

@@ -84,15 +84,20 @@ export async function getAttributeStates(db: DbDriver): Promise<AttributeState[]
   }));
 }
 
+/**
+ * Inserts or replaces the given attribute_state rows in sequence.
+ * Atomicity is the caller's responsibility — wrap in `withTransactionAsync` if
+ * you need all-or-nothing semantics (e.g., `submitLog` does this). expo-sqlite
+ * does not support nested transactions, so this function MUST NOT introduce
+ * its own.
+ */
 export async function updateAttributeStates(db: DbDriver, states: AttributeState[]): Promise<void> {
-  await db.withTransactionAsync(async () => {
-    for (const state of states) {
-      await db.runAsync(
-        'INSERT OR REPLACE INTO attribute_state (attribute, level, in_progress_xp) VALUES (?, ?, ?)',
-        [state.attribute, state.level, state.inProgressXp],
-      );
-    }
-  });
+  for (const state of states) {
+    await db.runAsync(
+      'INSERT OR REPLACE INTO attribute_state (attribute, level, in_progress_xp) VALUES (?, ?, ?)',
+      [state.attribute, state.level, state.inProgressXp],
+    );
+  }
 }
 
 export async function getStreak(db: DbDriver): Promise<Streak> {
