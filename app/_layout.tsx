@@ -18,6 +18,8 @@ import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
 import { useLogsStore } from '@/state/logsStore';
 import { useAppForegroundDecay } from '@/state/hooks/useAppForegroundDecay';
+import { useAIAvailabilityProbe } from '@/state/hooks/useAIAvailabilityProbe';
+import { AIUnavailableBanner } from '@/ui/components/AIUnavailableBanner';
 import '../global.css';
 
 /**
@@ -26,10 +28,18 @@ import '../global.css';
  * `runDecay()` only fire AFTER tables exist — otherwise `getLastLogDay` runs
  * a SELECT on `logs` before migration 001 has applied and crashes with
  * "no such table: logs" on a fresh install.
+ * Also mounts the AI availability probe, which polls on-device AI support and
+ * surfaces an inline banner when AI is unavailable.
  */
 function PostBootShell(): React.JSX.Element {
   useAppForegroundDecay();
-  return <Slot />;
+  useAIAvailabilityProbe();
+  return (
+    <>
+      <AIUnavailableBanner />
+      <Slot />
+    </>
+  );
 }
 
 export default function RootLayout() {
