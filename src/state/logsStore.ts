@@ -14,6 +14,8 @@ export interface LogsStoreState {
   lastResultSummary: string | null;
   lowConfidence: boolean;
   error: 'storage-error' | 'unknown' | null;
+  /** Underlying exception message for the most recent error. Surfaced in __DEV__ only. */
+  errorDetail: string | null;
 
   hydrate: () => Promise<void>;
   submitLog: (text: string) => Promise<void>;
@@ -38,6 +40,7 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
     lastResultSummary: null,
     lowConfidence: false,
     error: null,
+    errorDetail: null,
     _abortController: null,
 
     hydrate: async () => {
@@ -52,6 +55,7 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
         _abortController: controller,
         submitting: true,
         error: null,
+        errorDetail: null,
         lowConfidence: false,
       });
 
@@ -78,6 +82,7 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
         return;
       }
 
+      const detail = 'detail' in result ? (result.detail ?? null) : null;
       switch (result.reason) {
         case 'low-confidence':
           internalSet({ submitting: false, lowConfidence: true, _abortController: null });
@@ -86,12 +91,22 @@ export const useLogsStore = create<LogsStoreState>((set, get) => {
           internalSet({ submitting: false, _abortController: null });
           break;
         case 'storage-error':
-          internalSet({ submitting: false, error: 'storage-error', _abortController: null });
+          internalSet({
+            submitting: false,
+            error: 'storage-error',
+            errorDetail: detail,
+            _abortController: null,
+          });
           break;
         case 'invalid-primary':
         case 'unknown':
         default:
-          internalSet({ submitting: false, error: 'unknown', _abortController: null });
+          internalSet({
+            submitting: false,
+            error: 'unknown',
+            errorDetail: detail,
+            _abortController: null,
+          });
           break;
       }
     },

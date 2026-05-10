@@ -250,8 +250,17 @@ describe('submitLog', () => {
       },
     };
 
-    const result = await submitLog('ran 5km', { aiService, db: wrapped, today: TODAY });
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const result = await submitLog('ran 5km', { aiService, db: wrapped, today: TODAY });
 
-    expect(result).toEqual({ ok: false, reason: 'storage-error' });
+      expect(result).toMatchObject({ ok: false, reason: 'storage-error' });
+      // Detail is captured for the dev-only on-screen surface; assert presence, not exact text.
+      if (!result.ok) {
+        expect(result.detail).toContain('synthetic transaction failure');
+      }
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

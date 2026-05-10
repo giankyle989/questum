@@ -29,6 +29,8 @@ export type SubmitLogResult =
   | {
       ok: false;
       reason: 'low-confidence' | 'invalid-primary' | 'aborted' | 'storage-error' | 'unknown';
+      /** Underlying exception message — only populated for storage-error and unknown. Surface in dev UI. */
+      detail?: string;
     };
 
 /**
@@ -118,7 +120,12 @@ export async function submitLog(text: string, deps: SubmitLogDeps): Promise<Subm
     if (isAbortError(err)) {
       return { ok: false, reason: 'aborted' };
     }
-    return { ok: false, reason: 'unknown' };
+    console.error('[submitLog] AI classify failed:', err);
+    return {
+      ok: false,
+      reason: 'unknown',
+      detail: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+    };
   }
 
   // 6. Validate AI result
@@ -212,8 +219,13 @@ export async function submitLog(text: string, deps: SubmitLogDeps): Promise<Subm
       }
       await settingsRepo.setSetting(deps.db, 'ai_source_last_used', deps.aiService.sourceId);
     });
-  } catch {
-    return { ok: false, reason: 'storage-error' };
+  } catch (err) {
+    console.error('[submitLog] storage transaction failed:', err);
+    return {
+      ok: false,
+      reason: 'storage-error',
+      detail: err instanceof Error ? `${err.name}: ${err.message}` : String(err),
+    };
   }
 
   // 16. Return success

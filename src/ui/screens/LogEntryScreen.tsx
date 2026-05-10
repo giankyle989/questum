@@ -25,6 +25,7 @@ export default function LogEntryScreen() {
   const submitting = useLogsStore((s) => s.submitting);
   const lowConfidence = useLogsStore((s) => s.lowConfidence);
   const error = useLogsStore((s) => s.error);
+  const errorDetail = useLogsStore((s) => s.errorDetail);
   const submitLog = useLogsStore((s) => s.submitLog);
   const cancelSubmit = useLogsStore((s) => s.cancelSubmit);
 
@@ -123,6 +124,18 @@ export default function LogEntryScreen() {
             style={{ fontSize: 14 }}
           >
             Something went wrong, try again.
+          </Text>
+        ) : null}
+
+        {/* Dev-only error detail surface — removed for release builds. */}
+        {__DEV__ && error !== null && errorDetail !== null ? (
+          <Text
+            testID="log-message-dev-detail"
+            selectable
+            className="font-manrope text-text-mute"
+            style={{ fontSize: 11, marginTop: 8, opacity: 0.7 }}
+          >
+            DEV: {errorDetail}
           </Text>
         ) : null}
       </View>
