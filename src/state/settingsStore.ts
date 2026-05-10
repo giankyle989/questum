@@ -12,6 +12,7 @@ export interface SettingsStoreState {
   lastDecayRunDay: string | null;
   decayPausedDaysThisYear: number;
   decayPauseStartedAt: string | null;
+  devForceAIUnavailable: boolean;
   loading: boolean;
 
   hydrate: () => Promise<void>;
@@ -21,6 +22,7 @@ export interface SettingsStoreState {
   setLastDecayRunDay: (day: string) => Promise<void>;
   setNotificationsEnabled: (value: boolean) => Promise<void>;
   setNotificationMorningTime: (value: string) => Promise<void>;
+  setDevForceAIUnavailable: (value: boolean) => Promise<void>;
 }
 
 function parseAiSource(raw: string | undefined): 'apple' | 'gemini' | 'mock' | 'none' {
@@ -38,6 +40,7 @@ export const useSettingsStore = create<SettingsStoreState>((set) => ({
   lastDecayRunDay: null,
   decayPausedDaysThisYear: 0,
   decayPauseStartedAt: null,
+  devForceAIUnavailable: false,
   loading: false,
 
   hydrate: async () => {
@@ -54,6 +57,7 @@ export const useSettingsStore = create<SettingsStoreState>((set) => ({
       lastDecayRunDay: all['last_decay_run_day'] ?? null,
       decayPausedDaysThisYear: parseInt(all['decay_paused_days_this_year'] ?? '0', 10),
       decayPauseStartedAt: all['decay_pause_started_at'] ?? null,
+      devForceAIUnavailable: all['dev_force_ai_unavailable'] === 'true',
       loading: false,
     });
   },
@@ -92,5 +96,11 @@ export const useSettingsStore = create<SettingsStoreState>((set) => ({
     const db = await getDb();
     await settingsRepo.setSetting(db, 'notification_morning_time', value);
     set({ notificationMorningTime: value });
+  },
+
+  setDevForceAIUnavailable: async (value) => {
+    const db = await getDb();
+    await settingsRepo.setSetting(db, 'dev_force_ai_unavailable', value ? 'true' : 'false');
+    set({ devForceAIUnavailable: value });
   },
 }));
