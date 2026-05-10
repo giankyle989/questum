@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
+import { haptics } from '@/lib/haptics';
 import { useLogsStore } from '@/state/logsStore';
 
 /**
@@ -46,6 +47,7 @@ export default function LogEntryScreen() {
 
   const handleSubmit = () => {
     if (submitDisabled) return;
+    haptics.tap();
     void submitLog(text);
   };
 

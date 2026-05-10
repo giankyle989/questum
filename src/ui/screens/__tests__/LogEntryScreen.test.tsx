@@ -31,6 +31,14 @@ jest.mock('@/state/logsStore', () => ({
   useLogsStore: jest.fn((selector: (s: unknown) => unknown) => selector(mockLogsState)),
 }));
 
+const mockImpactAsync = jest.fn().mockResolvedValue(undefined);
+jest.mock('expo-haptics', () => ({
+  impactAsync: (...args: unknown[]) => mockImpactAsync(...args),
+  notificationAsync: jest.fn().mockResolvedValue(undefined),
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  NotificationFeedbackType: { Success: 'success' },
+}));
+
 import LogEntryScreen from '@/ui/screens/LogEntryScreen';
 
 function setMockLogsState(partial: Partial<MockLogsState>): void {
@@ -101,5 +109,25 @@ describe('LogEntryScreen', () => {
     setMockLogsState({ error: 'unknown' });
     const { getByText } = render(<LogEntryScreen />);
     expect(getByText(/went wrong/)).toBeTruthy();
+  });
+
+  describe('submit haptics', () => {
+    beforeEach(() => {
+      mockImpactAsync.mockClear();
+    });
+
+    it('fires a light impact when Submit is pressed with non-empty text', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      fireEvent.changeText(getByTestId('log-text-input'), 'ran 5km');
+      fireEvent.press(getByTestId('log-submit'));
+      expect(mockImpactAsync).toHaveBeenCalledTimes(1);
+      expect(mockImpactAsync).toHaveBeenCalledWith('light');
+    });
+
+    it('does not fire haptics when Submit is disabled', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      fireEvent.press(getByTestId('log-submit'));
+      expect(mockImpactAsync).not.toHaveBeenCalled();
+    });
   });
 });
