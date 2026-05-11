@@ -10,6 +10,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^expo-sqlite$': '<rootDir>/src/__mocks__/expo-sqlite.ts',
+    '^expo-notifications$': '<rootDir>/src/__mocks__/expo-notifications.ts',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
   coverageThreshold: {
