@@ -43,6 +43,12 @@ module.exports = {
       functions: 100,
       lines: 100,
     },
+    './src/notifications/notificationCopy.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
     './src/storage/repositories/': {
       statements: 85,
       branches: 85,
