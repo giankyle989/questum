@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Attribute } from '@/game/constants';
 import * as characterRepo from '@/storage/repositories/characterRepo';
 import type { Character, AttributeState, Streak } from '@/storage/repositories/characterRepo';
 import { getDb } from '@/storage/db';
@@ -7,17 +8,25 @@ export interface CharacterStoreState {
   character: Character | null;
   attributeStates: AttributeState[];
   streak: Streak;
+  /**
+   * Attributes that had non-zero in-progress XP reduced during the most recent
+   * foreground decay recompute. Runtime-only — not persisted to SQLite. Drives
+   * the AttributeBar shimmer + the FirstDecayModal trigger.
+   */
+  decayedAttributesToday: Attribute[];
   loading: boolean;
   error: string | null;
 
   hydrate: () => Promise<void>;
   createCharacter: (name: string, avatarId: string) => Promise<void>;
+  setDecayedAttributesToday: (attrs: Attribute[]) => void;
 }
 
 export const useCharacterStore = create<CharacterStoreState>((set, get) => ({
   character: null,
   attributeStates: [],
   streak: { currentLength: 0, longestLength: 0 },
+  decayedAttributesToday: [],
   loading: false,
   error: null,
 
@@ -40,5 +49,9 @@ export const useCharacterStore = create<CharacterStoreState>((set, get) => ({
     const db = await getDb();
     await characterRepo.createCharacter(db, name, avatarId);
     await get().hydrate();
+  },
+
+  setDecayedAttributesToday: (attrs) => {
+    set({ decayedAttributesToday: attrs });
   },
 }));
