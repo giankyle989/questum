@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { getDb } from '@/storage/db';
 import { todayLocalISODate } from '@/lib/clock';
+import type { Attribute } from '@/game/constants';
 import { useSettingsStore } from '@/state/settingsStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { effectiveInactiveDays, applyDecay } from '@/game/decay';
@@ -18,14 +19,18 @@ import type { ISODate } from '@/game/calendar';
  *   plus once on mount (cold start).
  * - Idempotent within the same calendar day, guarded by a `useRef` holding
  *   the most recent run-day. The ref is initialized from `getState()` so
- *   the hook does not subscribe reactively — the guard only needs the value
- *   at the moment decay fires.
- * - On a successful decay pass: writes attribute states to SQLite and calls
- *   `characterStore.hydrate()` so the UI sees the new values.
- * - On the first-ever decay, sets `first_decay_shown = "true"` in settings
- *   (Phase 4 uses this to trigger the explainer modal; Phase 3 only sets it).
+ *   the hook does not subscribe reactively — the guard only reads the value
+ *   when runDecay fires.
+ * - On a successful decay pass: writes attribute states to SQLite, calls
+ *   `characterStore.hydrate()`, and records which attributes had non-zero
+ *   in-progress XP reduced via `characterStore.setDecayedAttributesToday(...)`.
+ * - On a no-decay foreground (within grace window, or user logged today),
+ *   clears `decayedAttributesToday` to `[]` so the shimmer turns off and the
+ *   first-decay modal trigger condition unsets.
+ * - Does NOT set `firstDecayShown`. That flag is now owned by the
+ *   FirstDecayModal dismiss handler (see CharacterSheetScreen).
  *
- * No unit test — depends on `AppState` (native). Verified manually in Task 1.11.
+ * No unit test — depends on `AppState` (native). Verified manually.
  */
 export function useAppForegroundDecay(): void {
   // Initialize from getState() (non-reactive) so we don't resubscribe on every
@@ -44,6 +49,7 @@ export function useAppForegroundDecay(): void {
       await settingsRepo.setSetting(db, 'last_decay_run_day', today);
       await useSettingsStore.getState().setLastDecayRunDay(today);
       lastDecayRunDayRef.current = today;
+      useCharacterStore.getState().setDecayedAttributesToday([]);
       return;
     }
 
@@ -53,21 +59,22 @@ export function useAppForegroundDecay(): void {
     );
     const eff = effectiveInactiveDays(daysSince, 0); // pauseWindows is Phase 4
 
+    const reducedAttrs: Attribute[] = [];
     if (eff > 0) {
       const states = await characterRepo.getAttributeStates(db);
-      const decayed = states.map((s) => ({
-        ...s,
-        inProgressXp: applyDecay({ level: s.level, inProgressXp: s.inProgressXp }, eff)
-          .inProgressXp,
-      }));
+      const decayed = states.map((s) => {
+        const nextXp = applyDecay(
+          { level: s.level, inProgressXp: s.inProgressXp },
+          eff,
+        ).inProgressXp;
+        if (nextXp < s.inProgressXp) reducedAttrs.push(s.attribute);
+        return { ...s, inProgressXp: nextXp };
+      });
       await characterRepo.updateAttributeStates(db, decayed);
       await useCharacterStore.getState().hydrate();
-
-      if (!useSettingsStore.getState().firstDecayShown) {
-        await settingsRepo.setSetting(db, 'first_decay_shown', 'true');
-        await useSettingsStore.getState().setFirstDecayShown(true);
-      }
     }
+
+    useCharacterStore.getState().setDecayedAttributesToday(reducedAttrs);
 
     await settingsRepo.setSetting(db, 'last_decay_run_day', today);
     await useSettingsStore.getState().setLastDecayRunDay(today);
