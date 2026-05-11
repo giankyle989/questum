@@ -8,9 +8,11 @@ import { characterLevel, xpToReachLevel } from '@/game/xp';
 import { useAIAvailabilityStore } from '@/state/aiAvailabilityStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useMissionsStore } from '@/state/missionsStore';
+import { useSettingsStore } from '@/state/settingsStore';
 import { haptics } from '@/lib/haptics';
 import { AttributeBar } from '@/ui/components/AttributeBar';
 import { AvatarBadge } from '@/ui/components/AvatarBadge';
+import { FirstDecayModal } from '@/ui/components/FirstDecayModal';
 import { MissionCard } from '@/ui/components/MissionCard';
 import { StreakIndicator } from '@/ui/components/StreakIndicator';
 
@@ -29,8 +31,11 @@ export default function CharacterSheetScreen() {
   const character = useCharacterStore((s) => s.character);
   const attributeStates = useCharacterStore((s) => s.attributeStates);
   const streak = useCharacterStore((s) => s.streak);
+  const decayedAttributesToday = useCharacterStore((s) => s.decayedAttributesToday);
   const activeMissions = useMissionsStore((s) => s.active);
   const aiAvailable = useAIAvailabilityStore((s) => s.available);
+  const firstDecayShown = useSettingsStore((s) => s.firstDecayShown);
+  const setFirstDecayShown = useSettingsStore((s) => s.setFirstDecayShown);
   const previewMissions = useMemo(() => activeMissions.slice(0, 3), [activeMissions]);
 
   // Build a Record<Attribute, number> of levels for `characterLevel`. If the
@@ -61,6 +66,8 @@ export default function CharacterSheetScreen() {
     }
     return map;
   }, [attributeStates]);
+
+  const decayedSet = useMemo(() => new Set(decayedAttributesToday), [decayedAttributesToday]);
 
   const displayName = character?.name ?? '';
 
@@ -93,6 +100,7 @@ export default function CharacterSheetScreen() {
                 level={s.level}
                 inProgressXp={s.inProgressXp}
                 xpThreshold={xpToReachLevel(s.level + 1)}
+                decayedToday={decayedSet.has(attr)}
               />
             );
           })}
@@ -143,6 +151,14 @@ export default function CharacterSheetScreen() {
           +
         </Text>
       </Pressable>
+
+      {!firstDecayShown && decayedAttributesToday.length > 0 ? (
+        <FirstDecayModal
+          onDismiss={() => {
+            void setFirstDecayShown(true);
+          }}
+        />
+      ) : null}
     </View>
   );
 }
