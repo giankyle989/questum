@@ -1,6 +1,9 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Constants from 'expo-constants';
+import { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
+import { fireTestDaily, fireTestNudge } from '@/notifications/notifications';
 import { useAIAvailabilityStore } from '@/state/aiAvailabilityStore';
 import { useCharacterStore } from '@/state/characterStore';
 import { useSettingsStore } from '@/state/settingsStore';
@@ -74,10 +77,26 @@ export default function SettingsScreen() {
   const setDecayPaused = useSettingsStore((s) => s.setDecayPaused);
   const devForceAIUnavailable = useSettingsStore((s) => s.devForceAIUnavailable);
   const setDevForceAIUnavailable = useSettingsStore((s) => s.setDevForceAIUnavailable);
+  const notificationMorningTime = useSettingsStore((s) => s.notificationMorningTime);
+  const setNotificationMorningTime = useSettingsStore((s) => s.setNotificationMorningTime);
+  const inactivityNudgeEnabled = useSettingsStore((s) => s.inactivityNudgeEnabled);
+  const setInactivityNudgeEnabled = useSettingsStore((s) => s.setInactivityNudgeEnabled);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const characterName = character?.name ?? 'Unknown';
   const aiSourceLabel = AI_SOURCE_LABEL[aiSourceLastUsed];
   const version = Constants.expoConfig?.version ?? '';
+
+  const formatMorningTime = (hhmm: string): string => {
+    const [hStr, mStr] = hhmm.split(':');
+    const h = Number(hStr);
+    const m = Number(mStr);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+  };
 
   return (
     <View testID="settings-screen" className="flex-1 bg-bg">
@@ -103,11 +122,79 @@ export default function SettingsScreen() {
                 testID="settings-notifications-switch"
                 value={notificationsEnabled}
                 onValueChange={(v) => {
-                  void setNotificationsEnabled(v);
+                  void (async () => {
+                    const result = await setNotificationsEnabled(v);
+                    setPermissionDenied(result.permissionDenied);
+                  })();
                 }}
               />
             }
           />
+          <Pressable
+            testID="settings-morning-time-row"
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !notificationsEnabled }}
+            disabled={!notificationsEnabled}
+            onPress={() => setPickerOpen(true)}
+            className="flex-row items-center justify-between border-b border-border px-4 py-3 last:border-b-0"
+          >
+            <Text
+              className={`font-manrope ${notificationsEnabled ? 'text-text' : 'text-text-mute'}`}
+              style={{ fontSize: 15 }}
+            >
+              Morning time
+            </Text>
+            <Text
+              className={`font-manrope ${notificationsEnabled ? 'text-text-mute' : 'text-text-dim'}`}
+              style={{ fontSize: 15 }}
+            >
+              {formatMorningTime(notificationMorningTime)}
+            </Text>
+          </Pressable>
+          <Row
+            label="Inactivity nudge (day 3+)"
+            testID="settings-inactivity-nudge-row"
+            value={
+              <Switch
+                testID="settings-inactivity-nudge-switch"
+                value={inactivityNudgeEnabled}
+                disabled={!notificationsEnabled}
+                onValueChange={(v) => {
+                  void setInactivityNudgeEnabled(v);
+                }}
+              />
+            }
+          />
+          {permissionDenied ? (
+            <Text
+              testID="settings-notifications-permission-denied"
+              className="px-4 pb-3 pt-1 font-manrope text-text-mute"
+              style={{ fontSize: 13, lineHeight: 18 }}
+            >
+              Enable in iOS Settings → Notifications → Questum to receive reminders.
+            </Text>
+          ) : null}
+          {pickerOpen ? (
+            <DateTimePicker
+              testID="datetimepicker"
+              mode="time"
+              display="spinner"
+              value={(() => {
+                const [hStr, mStr] = notificationMorningTime.split(':');
+                const d = new Date();
+                d.setHours(Number(hStr), Number(mStr), 0, 0);
+                return d;
+              })()}
+              onChange={(event, selected) => {
+                setPickerOpen(false);
+                if (event.type === 'set' && selected) {
+                  const hh = String(selected.getHours()).padStart(2, '0');
+                  const mm = String(selected.getMinutes()).padStart(2, '0');
+                  void setNotificationMorningTime(`${hh}:${mm}`);
+                }
+              }}
+            />
+          ) : null}
         </Section>
 
         <Section title="Decay">
@@ -162,6 +249,30 @@ export default function SettingsScreen() {
                 />
               }
             />
+            <Pressable
+              testID="settings-dev-test-daily"
+              accessibilityRole="button"
+              onPress={() => {
+                void fireTestDaily();
+              }}
+              className="px-4 py-3"
+            >
+              <Text className="font-manrope text-text" style={{ fontSize: 15 }}>
+                Send test daily notification (5s)
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="settings-dev-test-nudge"
+              accessibilityRole="button"
+              onPress={() => {
+                void fireTestNudge();
+              }}
+              className="px-4 py-3"
+            >
+              <Text className="font-manrope text-text" style={{ fontSize: 15 }}>
+                Send test inactivity nudge (5s)
+              </Text>
+            </Pressable>
           </Section>
         ) : null}
       </ScrollView>
