@@ -227,6 +227,33 @@ describe('SettingsScreen', () => {
       });
       expect(getByTestId('settings-notifications-permission-denied')).toBeTruthy();
     });
+
+    it('clears the permission-denied label on a subsequent successful toggle ON', async () => {
+      // First call: denied (sets the label).
+      mockSetNotificationsEnabled.mockResolvedValueOnce({ permissionDenied: true });
+      // Second call: granted (should clear the label).
+      mockSetNotificationsEnabled.mockResolvedValueOnce({ permissionDenied: false });
+
+      const { getByTestId, queryByTestId } = render(<SettingsScreen />);
+
+      // First toggle: deny.
+      await act(async () => {
+        fireEvent(getByTestId('settings-notifications-switch'), 'valueChange', true);
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(getByTestId('settings-notifications-permission-denied')).toBeTruthy();
+
+      // Second toggle: grant.
+      await act(async () => {
+        fireEvent(getByTestId('settings-notifications-switch'), 'valueChange', true);
+      });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(queryByTestId('settings-notifications-permission-denied')).toBeNull();
+    });
   });
 
   describe('Developer — notification test buttons', () => {
