@@ -30,7 +30,7 @@ const config: ExpoConfig = {
   },
   assetBundlePatterns: ['**/*'],
   ios: iosConfig,
-  plugins: ['expo-router', 'expo-font', 'expo-sqlite'],
+  plugins: ['expo-router', 'expo-font', 'expo-sqlite', 'expo-notifications'],
   experiments: {
     typedRoutes: true,
   },
