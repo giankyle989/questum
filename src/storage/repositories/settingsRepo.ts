@@ -11,7 +11,8 @@ export type SettingKey =
   | 'ai_source_last_used'
   | 'onboarding_complete'
   | 'last_decay_run_day'
-  | 'dev_force_ai_unavailable';
+  | 'dev_force_ai_unavailable'
+  | 'inactivity_nudge_enabled';
 
 export async function getSetting(db: DbDriver, key: SettingKey): Promise<string | null> {
   const row = await db.getFirstAsync<{ value: string }>(
