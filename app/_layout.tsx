@@ -19,6 +19,7 @@ import { useMissionsStore } from '@/state/missionsStore';
 import { useLogsStore } from '@/state/logsStore';
 import { useAppForegroundDecay } from '@/state/hooks/useAppForegroundDecay';
 import { useAIAvailabilityProbe } from '@/state/hooks/useAIAvailabilityProbe';
+import { useNotificationSync } from '@/state/hooks/useNotificationSync';
 import { AIUnavailableBanner } from '@/ui/components/AIUnavailableBanner';
 import { AnimationOrchestrator } from '@/ui/components/AnimationOrchestrator';
 import '../global.css';
@@ -35,6 +36,7 @@ import '../global.css';
 function PostBootShell(): React.JSX.Element {
   useAppForegroundDecay();
   useAIAvailabilityProbe();
+  useNotificationSync();
   return (
     <>
       <AIUnavailableBanner />
