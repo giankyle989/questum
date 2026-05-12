@@ -12,6 +12,10 @@ const iosConfig: IOSWithDeploymentTarget = {
   deploymentTarget: '26.0',
   infoPlist: {
     ITSAppUsesNonExemptEncryption: false,
+    NSMicrophoneUsageDescription:
+      'Questum uses the microphone to let you dictate your daily log instead of typing.',
+    NSSpeechRecognitionUsageDescription:
+      'Questum transcribes your dictated log on-device. Your speech never leaves your phone.',
   },
 };
 
@@ -30,7 +34,16 @@ const config: ExpoConfig = {
   },
   assetBundlePatterns: ['**/*'],
   ios: iosConfig,
-  plugins: ['expo-router', 'expo-font', 'expo-sqlite', 'expo-notifications'],
+  plugins: [
+    'expo-router',
+    'expo-font',
+    'expo-sqlite',
+    'expo-notifications',
+    [
+      'expo-speech-recognition',
+      { microphonePermission: false, speechRecognitionPermission: false },
+    ],
+  ],
   experiments: {
     typedRoutes: true,
   },
