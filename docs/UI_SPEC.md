@@ -70,7 +70,7 @@ Pull-to-refresh: re-runs decay calculation, regenerates daily missions if a new 
 Opens as a bottom sheet from the floating button.
 
 - Single text input, autofocus, "What did you do?" placeholder
-- Voice input button (Phase 4)
+- Voice input button: mic icon overlaid top-right inside the text input. Tap to start dictation, tap again to stop; the final transcript merges into the existing text (empty input → replace; non-empty → append with a single space). On-device transcription via `expo-speech-recognition` (`requiresOnDeviceRecognition: true`). Hidden in environments without the native module (Expo Go). Disabled while a submission is in flight. On permission denial, taps open an iOS Alert with a Cancel / Open Settings choice.
 - Submit button (disabled until text is non-empty)
 - After submit:
   - Show loading state ("Reading your log...")

@@ -116,6 +116,8 @@ Phases are sequential. Each phase has acceptance criteria. Do not start phase N+
 
 **Goal:** Ship-quality feel. Animations, notifications, mission generator, AI-unavailable banner.
 
+**Status:** Code-complete (2026-05-12). Voice input (task #10) ships behind an `isSupported` gate — manual device verification of the dictation flow is deferred to the Phase 5 Mac-day session (Expo Go cannot load the `expo-speech-recognition` native module, so a custom EAS dev build on a real iPhone is required).
+
 **Tasks:**
 
 1. XP gain reveal animation (Reanimated 3)
