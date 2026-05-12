@@ -25,8 +25,11 @@ The artifact lives at the docs root (alongside `PRD.md`, `ARCHITECTURE.md`) — 
 - **EAS Build production profile.** Phase 5 owns the production build infrastructure.
 - **Android Play Console listing.** Phase 6. Different field structure (short description vs full description, different limits).
 - **Actually capturing the screenshots.** Phase 5. Requires a production iOS build on a real device.
-- **Designing screenshot captions / overlay frames.** Deferred to a launch-week iteration. First submission uses raw screenshots.
 - **Building support, marketing, or privacy policy pages.** The user provides URLs; this sub-project only places placeholder slots.
+
+### In scope (treatment A confirmed)
+
+- **Screenshot caption / overlay design.** Treatment A locked in (bold caption on top, full-bleed phone screenshot below — Things / Notion style). Specific caption text per-screen is committed in §11 of `docs/STORE_LISTING.md`. Actual screenshot capture is still Phase 5 (requires production build), but Phase 5's capturer has the captions + composition spec ready to follow.
 
 ## Architecture
 
@@ -56,7 +59,30 @@ Single markdown file, 11 top-level sections in this order:
 8. **Privacy Nutrition Label** — every section marked `Data Not Collected` with one-line rationale.
 9. **Supported Devices list** — required Apple-Intelligence-capable iPhones, per `docs/PRD.md` §5.2.
 10. **URLs** — three labelled placeholders the user fills.
-11. **Screenshots plan** — required device sizes; six screens listed in capture order with explicit setup conditions (e.g., character level 4, specific log text).
+11. **Screenshots plan + composition** — required device sizes; six screens listed in capture order with explicit setup conditions (e.g., character level 4, specific log text); the treatment-A composition spec (caption typography, padding, phone frame); the six per-screen caption strings to overlay.
+
+### Treatment A composition spec (baked into §11)
+
+- **Background:** solid `#0E1116` (matches app bg color).
+- **Caption block:** top of frame, ~16% of vertical height. Left-aligned. Two-line max.
+  - Line 1: white (`#E6EDF3`), font weight 800, size ~64pt at 1290×2796 output (≈ App Store 6.7" screenshot resolution).
+  - Line 2: gold accent (`#E8C547`), same weight + size.
+- **Phone area:** ~84% of vertical height. Screenshot is full-bleed inside an iPhone device frame (use Apple's official Marketing Resources frame or generate via a tool like Mockuuups Studio).
+- **Padding:** 64pt horizontal margins inside the caption block; phone screenshot fills horizontally with ~32pt left/right margin.
+- **Font:** the same Manrope family the app uses (`Manrope_800ExtraBold` for line 1, `Manrope_800ExtraBold` for line 2 — single weight, color difference is the contrast).
+
+### Six per-screen captions (in capture order)
+
+| # | Screen | Caption line 1 (white) | Caption line 2 (gold) |
+|---|---|---|---|
+| 1 | Character Sheet | `Type what you did.` | `AI builds your character.` |
+| 2 | Log Entry modal | `One sentence.` | `That's the whole loop.` |
+| 3 | XP gain reveal | `Earn it.` | `Watch it land.` |
+| 4 | Level-up overlay | `Level up the parts of you` | `that actually matter.` |
+| 5 | Missions tab | `Daily targets,` | `picked from your weak spots.` |
+| 6 | AI Engine confirmation | `On-device AI.` | `Your logs never leave your phone.` |
+
+These captions are deliberately short — they fit treatment A's two-line bold format and read clearly at App Store thumbnail size. Line 1 carries the verb / setup; line 2 carries the gold-highlighted payoff.
 
 Each section starts with a clear `## N. <Section title>` heading so the user can quickly scan for the field they're filling in App Store Connect.
 
@@ -94,7 +120,7 @@ This sub-project is complete when:
 4. The keywords list is ≤100 chars including commas, with no overlap with the app name or subtitle.
 5. The supported-devices list mirrors `docs/PRD.md` §5.2 (Apple-Intelligence-capable iPhones).
 6. URLs are placeholders with a clear "PROVIDE BEFORE SUBMISSION" call-out.
-7. Screenshots plan lists six screens in capture order with setup conditions, plus the required device sizes.
+7. Screenshots plan lists six screens in capture order with setup conditions, plus the required device sizes, the treatment-A composition spec, and the six per-screen captions.
 8. The doc is committed to git.
 
 ## Risks and open questions
@@ -109,6 +135,6 @@ This sub-project is complete when:
 - App icon and splash audit at small sizes — follow-up after the user runs an EAS build and sees the icon on the home screen.
 - EAS Build production profile — Phase 5.
 - Privacy Policy page hosting — Phase 5 (or earlier if the user prefers; not on this sub-project's critical path).
-- Screenshot capture and caption design — Phase 5, after a production build runs on iPhone hardware.
+- Screenshot capture — Phase 5, after a production build runs on iPhone hardware. (Caption design + composition spec ARE in scope this sub-project — see §11 of `STORE_LISTING.md`.)
 - Android Play Console listing — Phase 6.
 - Real `AppleAIService` — Phase 5.
