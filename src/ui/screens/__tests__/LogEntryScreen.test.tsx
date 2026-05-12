@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 const mockSubmitLog = jest.fn();
 const mockCancelSubmit = jest.fn();
@@ -39,6 +39,37 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Success: 'success' },
 }));
 
+const mockVoiceStart = jest.fn();
+const mockVoiceStop = jest.fn();
+const mockVoiceOnOpenSettings = jest.fn();
+
+let mockVoiceResultCallback: ((transcript: string) => void) | null = null;
+
+interface MockVoiceState {
+  status: 'idle' | 'listening' | 'error';
+  errorReason: 'permission-denied' | 'no-speech' | 'unknown' | null;
+  isSupported: boolean;
+}
+
+let mockVoiceState: MockVoiceState = {
+  status: 'idle',
+  errorReason: null,
+  isSupported: true,
+};
+
+jest.mock('@/state/hooks/useVoiceInput', () => ({
+  useVoiceInput: ({ onResult }: { onResult: (t: string) => void }) => {
+    mockVoiceResultCallback = onResult;
+    return {
+      status: mockVoiceState.status,
+      errorReason: mockVoiceState.errorReason,
+      isSupported: mockVoiceState.isSupported,
+      start: mockVoiceStart,
+      stop: mockVoiceStop,
+    };
+  },
+}));
+
 import LogEntryScreen from '@/ui/screens/LogEntryScreen';
 
 function setMockLogsState(partial: Partial<MockLogsState>): void {
@@ -52,6 +83,11 @@ describe('LogEntryScreen', () => {
     mockBack.mockClear();
     mockPush.mockClear();
     mockLogsState = { ...defaultState };
+    mockVoiceStart.mockClear();
+    mockVoiceStop.mockClear();
+    mockVoiceOnOpenSettings.mockClear();
+    mockVoiceResultCallback = null;
+    mockVoiceState = { status: 'idle', errorReason: null, isSupported: true };
   });
 
   it('renders text input with the "What did you do?" placeholder', () => {
@@ -128,6 +164,73 @@ describe('LogEntryScreen', () => {
       const { getByTestId } = render(<LogEntryScreen />);
       fireEvent.press(getByTestId('log-submit'));
       expect(mockImpactAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Voice input', () => {
+    it('renders the voice mic button when isSupported=true', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      expect(getByTestId('voice-mic-button')).toBeTruthy();
+    });
+
+    it('does NOT render the mic button when isSupported=false', () => {
+      mockVoiceState = { status: 'idle', errorReason: null, isSupported: false };
+      const { queryByTestId } = render(<LogEntryScreen />);
+      expect(queryByTestId('voice-mic-button')).toBeNull();
+    });
+
+    it('replaces empty input with the transcript on onResult', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      expect(mockVoiceResultCallback).not.toBeNull();
+      fireEvent.changeText(getByTestId('log-text-input'), '');
+      act(() => {
+        mockVoiceResultCallback?.('ran five kilometers');
+      });
+      expect(getByTestId('log-text-input').props.value).toBe('ran five kilometers');
+    });
+
+    it('appends transcript with a space when input is non-empty', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      fireEvent.changeText(getByTestId('log-text-input'), 'Ran 5k');
+      act(() => {
+        mockVoiceResultCallback?.('this morning before work');
+      });
+      expect(getByTestId('log-text-input').props.value).toBe('Ran 5k this morning before work');
+    });
+
+    it('trims trailing whitespace before appending', () => {
+      const { getByTestId } = render(<LogEntryScreen />);
+      fireEvent.changeText(getByTestId('log-text-input'), 'Ran 5k   ');
+      act(() => {
+        mockVoiceResultCallback?.('this morning');
+      });
+      expect(getByTestId('log-text-input').props.value).toBe('Ran 5k this morning');
+    });
+
+    it('disables the mic button while submitting=true', () => {
+      setMockLogsState({ submitting: true });
+      const { getByTestId } = render(<LogEntryScreen />);
+      expect(getByTestId('voice-mic-button').props.accessibilityState).toMatchObject({
+        disabled: true,
+      });
+    });
+
+    it('shows an inline "Couldn\'t capture audio" message on unknown error', () => {
+      mockVoiceState = { status: 'error', errorReason: 'unknown', isSupported: true };
+      const { getByTestId } = render(<LogEntryScreen />);
+      expect(getByTestId('log-message-voice-error')).toBeTruthy();
+    });
+
+    it('does NOT show the voice-error inline message on no-speech', () => {
+      mockVoiceState = { status: 'error', errorReason: 'no-speech', isSupported: true };
+      const { queryByTestId } = render(<LogEntryScreen />);
+      expect(queryByTestId('log-message-voice-error')).toBeNull();
+    });
+
+    it('does NOT show the voice-error inline message on permission-denied', () => {
+      mockVoiceState = { status: 'error', errorReason: 'permission-denied', isSupported: true };
+      const { queryByTestId } = render(<LogEntryScreen />);
+      expect(queryByTestId('log-message-voice-error')).toBeNull();
     });
   });
 });

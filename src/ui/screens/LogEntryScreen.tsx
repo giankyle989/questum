@@ -1,25 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Linking, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { haptics } from '@/lib/haptics';
+import { useVoiceInput } from '@/state/hooks/useVoiceInput';
 import { useLogsStore } from '@/state/logsStore';
+import { VoiceMicButton } from '@/ui/components/VoiceMicButton';
 
 /**
  * Modal sheet for the user-typed-log flow. Reads `submitting`, `lowConfidence`,
  * and `error` from the logs store, owns the input text locally, and forwards
  * `submitLog`/`cancelSubmit` to the store.
  *
+ * Voice input: a `useVoiceInput` hook wraps `expo-speech-recognition`. The
+ * VoiceMicButton is rendered inside the TextInput container at top-right.
+ * Final transcripts merge into the existing text with a single-space
+ * separator (empty → replace; non-empty → append with space). The mic is
+ * disabled while `submitting=true` and hidden entirely when the native
+ * module is unavailable (Expo Go dev build).
+ *
  * Inline message rules (per UI_SPEC §LogEntryScreen):
- * - Low-confidence is a soft state — the input text is preserved so the user
- *   can edit and retry, and we do NOT clear the field.
+ * - Low-confidence is a soft state — the input text is preserved.
  * - Storage / unknown errors show inline guidance; the input text is preserved.
  * - On clean success (submitting transitions true → false with no error and no
  *   low-confidence flag), the input is cleared. Tracked via a ref so we only
  *   react to the falling edge of `submitting`.
  *
  * XP-reveal animation, level-up modal, and auto-close are wired in Phase 4.
- * Slice 1 scope keeps this screen to the input → submit → inline-result loop.
  */
 export default function LogEntryScreen() {
   const router = useRouter();
@@ -32,8 +39,15 @@ export default function LogEntryScreen() {
 
   const [text, setText] = useState('');
 
-  // Falling edge of `submitting` with no error / low-confidence ⇒ success.
-  // Use a ref so re-renders triggered by the user typing don't fire setText('').
+  const voice = useVoiceInput({
+    onResult: (transcript) => {
+      setText((prev) => {
+        const trimmedPrev = prev.trimEnd();
+        return trimmedPrev === '' ? transcript : `${trimmedPrev} ${transcript}`;
+      });
+    },
+  });
+
   const prevSubmittingRef = useRef(submitting);
   useEffect(() => {
     if (prevSubmittingRef.current && !submitting && !lowConfidence && error === null) {
@@ -55,6 +69,8 @@ export default function LogEntryScreen() {
     cancelSubmit();
     router.back();
   };
+
+  const showVoiceUnknownError = voice.status === 'error' && voice.errorReason === 'unknown';
 
   return (
     <View className="flex-1 bg-bg px-4 pt-12">
@@ -88,19 +104,33 @@ export default function LogEntryScreen() {
         </TouchableOpacity>
       </View>
 
-      <TextInput
-        testID="log-text-input"
-        accessibilityLabel="Log text"
-        autoFocus
-        multiline
-        editable={!submitting}
-        placeholder="What did you do?"
-        placeholderTextColor="#7a7d8a"
-        value={text}
-        onChangeText={setText}
-        className="mt-6 min-h-[160px] rounded-2xl bg-surface-2 p-4 font-manrope text-text"
-        style={{ fontSize: 17, lineHeight: 24, textAlignVertical: 'top' }}
-      />
+      <View className="mt-6">
+        <TextInput
+          testID="log-text-input"
+          accessibilityLabel="Log text"
+          autoFocus
+          multiline
+          editable={!submitting}
+          placeholder="What did you do?"
+          placeholderTextColor="#7a7d8a"
+          value={text}
+          onChangeText={setText}
+          className="min-h-[160px] rounded-2xl bg-surface-2 p-4 font-manrope text-text"
+          style={{ fontSize: 17, lineHeight: 24, textAlignVertical: 'top', paddingRight: 52 }}
+        />
+        {voice.isSupported ? (
+          <VoiceMicButton
+            status={voice.status}
+            errorReason={voice.errorReason}
+            disabled={submitting}
+            onStart={voice.start}
+            onStop={voice.stop}
+            onOpenSettings={() => {
+              void Linking.openSettings();
+            }}
+          />
+        ) : null}
+      </View>
 
       <View className="mt-4">
         {lowConfidence ? (
@@ -126,6 +156,14 @@ export default function LogEntryScreen() {
             style={{ fontSize: 14 }}
           >
             Something went wrong, try again.
+          </Text>
+        ) : showVoiceUnknownError ? (
+          <Text
+            testID="log-message-voice-error"
+            className="font-manrope text-text-mute"
+            style={{ fontSize: 14 }}
+          >
+            Couldn&apos;t capture audio — try again.
           </Text>
         ) : null}
 
